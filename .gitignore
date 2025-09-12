@@ -3,12 +3,8 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
@@ -28,10 +24,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# local env files
+.env*.local
+.env
 
 # vercel
 .vercel
@@ -39,3 +35,49 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Demo and documentation files
+*_REPORT.md
+*_COMPLETE.md
+*_STATUS.md
+*_FIXES.md
+*_PLAN.md
+*_SETUP.md
+*_INTEGRATION.md
+*_RESULTS.md
+*_SUCCESS.md
+*_OPTIMIZATION.md
+*_IMPLEMENTATION.md
+*_COMPLETION.md
+*_SUMMARY.md
+*_COMMANDS.md
+*_GUIDE.md
+*_POLICY.md
+*_SCHEMA.md
+*_FIX.sql
+ADD_SAMPLE_DATA.sql
+FIX_*.sql
+QUICK_*.sql
+PURE_*.sql
+
+# Test API endpoints
+src/app/api/test-*
+src/app/api/*-test
+src/app/api/debug-*
+src/app/api/fix-*
+src/app/api/quick-*
+src/app/api/comprehensive-*
+src/app/api/check-*
+src/app/api/create-*
+src/app/api/investigate-*
+src/app/api/supabase-status
+src/app/api/table-structure
+src/app/api/database-status
+src/app/api/health
+src/app/api/cart-simple
+src/app/api/cart-working
+src/app/api/chat/test
+
+# Setup scripts
+setup-*.bat
+setup-*.sh
