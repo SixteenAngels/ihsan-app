@@ -7,15 +7,16 @@ let io: SocketIOServer | null = null
 let chatServer: ChatServer | null = null
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (res.socket.server.io) {
-    console.log('Socket.IO already running')
+  // Check if socket exists and if io is already initialized
+  if (!res.socket || (res.socket as any).server?.io) {
+    console.log('Socket.IO already running or socket not available')
     res.end()
     return
   }
 
   console.log('Setting up Socket.IO server...')
 
-  const httpServer: NetServer = res.socket.server as any
+  const httpServer: NetServer = (res.socket as any).server
   io = new SocketIOServer(httpServer, {
     path: '/api/socketio',
     cors: {
@@ -29,7 +30,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   // Initialize chat server
   chatServer = new ChatServer(io)
 
-  res.socket.server.io = io
+  ;(res.socket as any).server.io = io
   res.end()
 }
 
