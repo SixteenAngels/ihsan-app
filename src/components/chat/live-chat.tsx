@@ -123,10 +123,108 @@ export default function LiveChat({
   }, [messages])
 
   const initializeSocket = () => {
-    // Socket.IO client initialization would go here
-    // For now, we'll simulate the connection
+    // Import socket.io-client dynamically to avoid SSR issues
+    import('socket.io-client').then((socketIOClient) => {
+      const io = socketIOClient.default
+      const socket = io(process.env.NODE_ENV === 'production' 
+        ? (process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com')
+        : 'http://localhost:3000', {
+        path: '/api/socketio',
+        transports: ['websocket', 'polling']
+      })
+
+      socketRef.current = socket
+
+      // Connection events
+      socket.on('connect', () => {
+        console.log('Socket connected:', socket.id)
     setIsConnected(true)
-    console.log('Socket connection initialized')
+        
+        // Authenticate user
+        socket.emit('authenticate', {
+          userId,
+          userRole
+        })
+      })
+
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected')
+        setIsConnected(false)
+      })
+
+      socket.on('authenticated', (data: any) => {
+        console.log('User authenticated:', data)
+      })
+
+      socket.on('authentication_error', (error: any) => {
+        console.error('Authentication error:', error)
+        toast.error('Chat authentication failed')
+      })
+
+      // Room events
+      socket.on('room_joined', (data: any) => {
+        console.log('Joined room:', data)
+        if (data.roomInfo) {
+          setSelectedRoom(prev => prev ? { ...prev, ...data.roomInfo } : null)
+        }
+      })
+
+      socket.on('user_joined', (data: any) => {
+        console.log('User joined:', data)
+        toast.success(`${data.userId} joined the chat`)
+      })
+
+      socket.on('user_left', (data: any) => {
+        console.log('User left:', data)
+        toast(`${data.userId} left the chat`)
+      })
+
+      // Message events
+      socket.on('new_message', (message: any) => {
+        console.log('New message received:', message)
+        setMessages(prev => [...prev, message])
+        
+        // Update room list if this is the current room
+        if (selectedRoom && message.roomId === selectedRoom.id) {
+          loadChatRooms()
+        }
+      })
+
+      // Typing events
+      socket.on('user_typing', (data: any) => {
+        if (data.userId !== userId) {
+          if (data.isTyping) {
+            setTypingUsers(prev => [...prev.filter(id => id !== data.userId), data.userId])
+          } else {
+            setTypingUsers(prev => prev.filter(id => id !== data.userId))
+          }
+        }
+      })
+
+      // Room status events
+      socket.on('room_status_updated', (data: any) => {
+        console.log('Room status updated:', data)
+        if (selectedRoom && data.roomId === selectedRoom.id) {
+          setSelectedRoom(prev => prev ? { ...prev, status: data.status, priority: data.priority } : null)
+        }
+        loadChatRooms()
+      })
+
+      socket.on('room_assigned', (data: any) => {
+        console.log('Room assigned:', data)
+        loadChatRooms()
+      })
+
+      // Error handling
+      socket.on('error', (error: any) => {
+        console.error('Socket error:', error)
+        toast.error(error.message || 'Chat error occurred')
+      })
+
+    }).catch(error => {
+      console.error('Failed to load socket.io-client:', error)
+      toast.error('Failed to initialize chat connection')
+    })
   }
 
   const loadChatRooms = async () => {
@@ -161,6 +259,11 @@ export default function LiveChat({
       setSelectedRoom(room)
       onRoomSelect?.(roomId)
 
+      // Join room via Socket.IO
+      if (socketRef.current) {
+        socketRef.current.emit('join_room', { roomId })
+      }
+
       // Load messages for this room
       const response = await fetch(`/api/chat/messages?room_id=${roomId}`)
       const data = await response.json()
@@ -180,11 +283,23 @@ export default function LiveChat({
     if (!newMessage.trim() || !selectedRoom) return
 
     try {
+      const messageText = newMessage.trim()
+      setNewMessage('')
+
+      // Send via Socket.IO for real-time delivery
+      if (socketRef.current) {
+        socketRef.current.emit('send_message', {
+          roomId: selectedRoom.id,
+          message: messageText,
+          messageType: 'text'
+        })
+      } else {
+        // Fallback to API if socket not available
       const messageData = {
         room_id: selectedRoom.id,
         sender_id: userId,
         sender_type: userRole === 'customer' ? 'customer' : 'agent',
-        message: newMessage.trim(),
+          message: messageText,
         message_type: 'text'
       }
 
@@ -199,13 +314,11 @@ export default function LiveChat({
       const data = await response.json()
 
       if (data.success) {
-        setNewMessage('')
         setMessages(prev => [...prev, data.data])
-        
-        // Update room list
         loadChatRooms()
       } else {
         toast.error('Failed to send message')
+        }
       }
     } catch (error) {
       toast.error('Error sending message')
@@ -216,9 +329,9 @@ export default function LiveChat({
   const handleTyping = (value: string) => {
     setNewMessage(value)
     
-    if (!isTyping) {
+    if (!isTyping && selectedRoom && socketRef.current) {
       setIsTyping(true)
-      // Emit typing start event
+      socketRef.current.emit('typing_start', { roomId: selectedRoom.id })
     }
 
     // Clear existing timeout
@@ -229,7 +342,9 @@ export default function LiveChat({
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false)
-      // Emit typing stop event
+      if (selectedRoom && socketRef.current) {
+        socketRef.current.emit('typing_stop', { roomId: selectedRoom.id })
+      }
     }, 1000)
   }
 
@@ -446,8 +561,8 @@ export default function LiveChat({
                       <div className="flex items-center space-x-1">
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                         </div>
                         <span className="text-xs text-gray-500 ml-2">
                           {typingUsers.join(', ')} typing...
