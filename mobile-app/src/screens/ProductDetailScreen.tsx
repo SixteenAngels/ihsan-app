@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { Alert, Button } from 'react-native';
 
 type Variant = { id: string; name: string; price: number };
 type Product = {
@@ -52,6 +53,14 @@ export default function ProductDetailScreen({ route }: any) {
     }
   };
 
+  const markReviewHelpful = async (reviewId: string) => {
+    try {
+      const res = await fetch(endpoints.reviewsHelpful(reviewId), { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      Alert.alert('Thanks!', 'Marked as helpful.');
+    } catch {}
+  };
+
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007AFF" />;
   if (!product) return <View style={styles.container}><Text style={styles.error}>Product not found</Text></View>;
 
@@ -67,6 +76,20 @@ export default function ProductDetailScreen({ route }: any) {
         <View style={styles.cta}>
           <Button title="Add to Cart" color="#007AFF" onPress={addToCart} />
         </View>
+        {Array.isArray((product as any).reviews) && (product as any).reviews.length ? (
+          <View style={{ marginTop: 24 }}>
+            <Text style={styles.section}>Reviews</Text>
+            {(product as any).reviews.map((r: any) => (
+              <View key={r.id} style={styles.review}>
+                <Text style={styles.reviewTitle}>{r.title || 'Review'}</Text>
+                <Text style={styles.reviewBody}>{r.comment || ''}</Text>
+                <View style={{ alignSelf: 'flex-start', marginTop: 8 }}>
+                  <Button title="Helpful" onPress={() => markReviewHelpful(r.id)} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

@@ -10,6 +10,15 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import ProductsScreen from './src/screens/ProductsScreen';
 import CategoriesScreen from './src/screens/CategoriesScreen';
 import ProductDetailScreen from './src/screens/ProductDetailScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import CartScreen from './src/screens/CartScreen';
+import OrdersScreen from './src/screens/OrdersScreen';
+import OrderDetailScreen from './src/screens/OrderDetailScreen';
+import WishlistScreen from './src/screens/WishlistScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import GroupBuysScreen from './src/screens/GroupBuysScreen';
+import CheckoutScreen from './src/screens/CheckoutScreen';
 import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
@@ -17,13 +26,17 @@ const Tab = createBottomTabNavigator();
 const ProductsStack = createNativeStackNavigator();
 const DashboardStack = createNativeStackNavigator();
 const ChatStack = createNativeStackNavigator();
+const OrdersStack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
 
 function ProductsStackScreen() {
   return (
     <ProductsStack.Navigator screenOptions={{ headerLargeTitle: true, headerShadowVisible: false }}>
+      <ProductsStack.Screen name="HomeScreen" component={HomeScreen} options={{ title: 'Home' }} />
       <ProductsStack.Screen name="ProductsHome" component={ProductsScreen} options={{ title: 'Products' }} />
       <ProductsStack.Screen name="Categories" component={CategoriesScreen} options={{ title: 'Categories' }} />
       <ProductsStack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product' }} />
+      <ProductsStack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Checkout' }} />
     </ProductsStack.Navigator>
   );
 }
@@ -32,6 +45,9 @@ function DashboardStackScreen() {
   return (
     <DashboardStack.Navigator screenOptions={{ headerLargeTitle: true, headerShadowVisible: false }}>
       <DashboardStack.Screen name="DashboardHome" component={DashboardScreen} options={{ title: 'Dashboard' }} />
+      <DashboardStack.Screen name="Cart" component={CartScreen} options={{ title: 'Cart' }} />
+      <DashboardStack.Screen name="Orders" component={OrdersScreen} options={{ title: 'Orders' }} />
+      <DashboardStack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: 'Order' }} />
     </DashboardStack.Navigator>
   );
 }
@@ -40,6 +56,10 @@ function ChatStackScreen() {
   return (
     <ChatStack.Navigator screenOptions={{ headerLargeTitle: true, headerShadowVisible: false }}>
       <ChatStack.Screen name="ChatHome" component={ChatScreen} options={{ title: 'Chat' }} />
+      <ChatStack.Screen name="Wishlist" component={WishlistScreen} options={{ title: 'Wishlist' }} />
+      <ChatStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <ChatStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <ChatStack.Screen name="GroupBuys" component={GroupBuysScreen} options={{ title: 'Group Buys' }} />
     </ChatStack.Navigator>
   );
 }

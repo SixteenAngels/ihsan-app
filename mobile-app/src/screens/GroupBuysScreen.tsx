@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { Button, Alert } from 'react-native';
 
 type GroupBuy = {
   id: string;
@@ -11,7 +12,8 @@ type GroupBuy = {
   end_date: string;
 };
 
-export default function GroupBuysScreen() {
+export default function GroupBuysScreen({ route }: any) {
+  const { userId } = route.params || {};
   const [rows, setRows] = useState<GroupBuy[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +46,22 @@ export default function GroupBuysScreen() {
             <Text style={styles.title}>{item.name}</Text>
             {item.description ? <Text style={styles.meta}>{item.description}</Text> : null}
             <Text style={styles.meta}>Ends {new Date(item.end_date).toLocaleString()}</Text>
+            <View style={{ marginTop: 8 }}>
+              <Button title="Join" onPress={async () => {
+                try {
+                  const res = await fetch(endpoints.groupBuyJoin(item.id), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, quantity: 1 }),
+                  });
+                  const json = await res.json();
+                  if (!json?.success) throw new Error(json?.error || 'Failed');
+                  Alert.alert('Joined', 'You joined the group buy');
+                } catch (e: any) {
+                  Alert.alert('Error', e.message || 'Failed to join');
+                }
+              }} />
+            </View>
           </View>
         )}
         ListEmptyComponent={<Text style={styles.empty}>No active group buys</Text>}
