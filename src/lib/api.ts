@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'
 
 // Product-related functions
@@ -10,7 +10,7 @@ export const getProducts = async (filters?: {
   limit?: number
   offset?: number
 }) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   let query = supabase
     .from('products')
@@ -65,7 +65,7 @@ export const getProducts = async (filters?: {
 }
 
 export const getProduct = async (slug: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('products')
@@ -99,7 +99,7 @@ export const getProduct = async (slug: string) => {
 }
 
 export const getCategories = async () => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('categories')
@@ -116,7 +116,7 @@ export const getCategories = async () => {
 
 // Cart functions
 export const getCartItems = async (userId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('cart_items')
@@ -148,7 +148,7 @@ export const getCartItems = async (userId: string) => {
 }
 
 export const addToCart = async (userId: string, productId: string, variantId: string | null, quantity: number) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   // Check if item already exists in cart
   const { data: existingItem } = await supabase
@@ -195,7 +195,7 @@ export const addToCart = async (userId: string, productId: string, variantId: st
 }
 
 export const updateCartItem = async (itemId: string, quantity: number) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   if (quantity <= 0) {
     // Remove item if quantity is 0 or less
@@ -226,7 +226,7 @@ export const updateCartItem = async (itemId: string, quantity: number) => {
 }
 
 export const removeFromCart = async (itemId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { error } = await supabase
     .from('cart_items')
@@ -239,7 +239,7 @@ export const removeFromCart = async (itemId: string) => {
 }
 
 export const clearCart = async (userId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { error } = await supabase
     .from('cart_items')
@@ -269,7 +269,7 @@ export const createOrder = async (orderData: {
     totalPrice: number
   }>
 }) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   // Generate order number
   const { data: orderNumberData } = await supabase.rpc('generate_order_number')
@@ -320,7 +320,7 @@ export const createOrder = async (orderData: {
 }
 
 export const getOrders = async (userId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('orders')
@@ -354,7 +354,7 @@ export const getOrders = async (userId: string) => {
 }
 
 export const getOrder = async (orderId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('orders')
@@ -389,7 +389,7 @@ export const getOrder = async (orderId: string) => {
 
 // Group buy functions
 export const getGroupBuys = async () => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('group_buys')
@@ -415,7 +415,7 @@ export const getGroupBuys = async () => {
 }
 
 export const joinGroupBuy = async (groupId: string, userId: string, quantity: number) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { data, error } = await supabase
     .from('group_buy_participants')
@@ -435,7 +435,7 @@ export const joinGroupBuy = async (groupId: string, userId: string, quantity: nu
 }
 
 export const leaveGroupBuy = async (groupId: string, userId: string) => {
-  const supabase = createClient()
+  // Use the exported supabase client
   
   const { error } = await supabase
     .from('group_buy_participants')

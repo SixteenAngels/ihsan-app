@@ -18,6 +18,7 @@ export interface OTPResult {
   secret?: string
   error?: string
   expiresAt?: string
+  cooldownUntil?: string
 }
 
 export interface VerificationResult {
@@ -43,7 +44,8 @@ class OTPService {
       if (!cooldownCheck.success) {
         return {
           success: false,
-          error: cooldownCheck.error
+          error: cooldownCheck.error,
+          cooldownUntil: cooldownCheck.cooldownUntil
         }
       }
 
@@ -164,7 +166,7 @@ class OTPService {
         name: 'Ihsan',
         account: userId,
         length: 32
-      })
+      } as any)
 
       // Generate QR code
       const qrCode = await QRCode.toDataURL(secret.otpauth_url!)

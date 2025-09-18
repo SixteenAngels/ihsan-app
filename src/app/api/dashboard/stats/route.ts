@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       { count: totalUsers },
       { count: totalProducts },
       { count: totalOrders },
-      { count: totalRevenue }
+      revenueQuery
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -54,7 +54,8 @@ export async function GET(request: Request) {
       .gte('created_at', startDate.toISOString())
 
     // Calculate revenue
-    const revenue = totalRevenue?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0
+    const totalRevenueRows = (revenueQuery?.data as Array<{ total_amount: number }> | null) || []
+    const revenue = totalRevenueRows.reduce((sum, row) => sum + (row.total_amount || 0), 0)
 
     // Get order status distribution
     const { data: orderStatuses } = await supabase

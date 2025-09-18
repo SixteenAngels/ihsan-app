@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   MessageCircle, 
   Send, 
@@ -174,11 +174,13 @@ export default function CustomerChatPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">Priority</label>
+                <label htmlFor="priority-select" className="block text-sm font-medium mb-2">Priority</label>
                 <select
+                  id="priority-select"
                   className="w-full p-2 border rounded-md"
                   value={newRoomData.priority}
                   onChange={(e) => setNewRoomData(prev => ({ ...prev, priority: e.target.value as any }))}
+                  aria-label="Select priority level for your support request"
                 >
                   <option value="low">Low - General inquiry</option>
                   <option value="normal">Normal - Standard support</option>

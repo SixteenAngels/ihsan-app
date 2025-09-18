@@ -1,316 +1,407 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShoppingBag, Truck, Users, Zap, Star, ArrowRight } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { 
-  fadeIn, 
-  slideInFromLeft, 
-  slideInFromRight, 
-  staggerContainer, 
-  staggerItem, 
-  cardVariants,
-  buttonVariants 
-} from '@/lib/animations'
+  ArrowRight, 
+  Star, 
+  Heart, 
+  ShoppingCart,
+  Smartphone,
+  Monitor,
+  Camera,
+  Headphones,
+  Watch,
+  Gamepad2,
+  TrendingUp,
+  Clock,
+  Truck,
+  Shield,
+  RotateCcw
+} from 'lucide-react'
 
-export default function Home() {
+interface Product {
+  id: string
+  name: string
+  price: number
+  originalPrice: number
+  discount: number
+  rating: number
+  reviews: number
+  image: string
+  badge?: string
+  brand: string
+  category: string
+}
+
+interface Category {
+  id: string
+  name: string
+  description: string
+  image: string
+  subcategories: Array<{
+    id: string
+    name: string
+    count: number
+    href: string
+  }>
+}
+
+export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch('/api/products?limit=8'),
+          fetch('/api/categories')
+        ])
+        
+        const productsData = await productsRes.json()
+        const categoriesData = await categoriesRes.json()
+        
+        setProducts(productsData.products || [])
+        setCategories(categoriesData || [])
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20">
+      <section className="bg-gradient-to-br from-slate-50 via-white to-red-50 py-20 relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.h1 
-              initial="hidden"
-              animate="visible"
-              variants={slideInFromLeft}
-              className="text-4xl md:text-6xl font-bold mb-6"
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              Welcome to <span className="text-primary">Ihsan</span>
+              <motion.h1
+                className="text-6xl lg:text-7xl font-black text-slate-900 leading-tight"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                iPhone 14
+                <span className="block text-gradient-red">
+                  Series
+                </span>
             </motion.h1>
             <motion.p 
-              initial="hidden"
-              animate="visible"
-              variants={slideInFromRight}
-              transition={{ delay: 0.2 }}
-              className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-            >
-              Modern e-commerce platform for Ghana and Africa. Shop with Air/Sea shipping options, 
-              Ready Now local stock, and Group Buy discounts.
+                className="text-xl lg:text-2xl text-slate-600 max-w-lg leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Up to 10% off Voucher
             </motion.p>
             <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+                className="flex flex-col sm:flex-row gap-4 mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
+                <Button size="lg" className="btn-primary text-lg px-8 py-4">
+                  Shop Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4">
+                  Learn More
+                </Button>
+              </motion.div>
+            </motion.div>
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button size="lg" asChild>
-                  <Link href="/categories">
-                    Start Shopping
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </motion.div>
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="/ready-now">
-                    Ready Now Items
-                  </Link>
-                </Button>
-              </motion.div>
+              <div className="w-full h-96 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl flex items-center justify-center">
+                <div className="text-6xl">📱</div>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16">
+      {/* Flash Sales */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl font-bold mb-4">Why Choose Ihsan?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Experience shopping like never before with our innovative features designed for Africa
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            <motion.div variants={staggerItem}>
-              <motion.div
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-              >
-                <Card className="text-center">
-                  <CardHeader>
-                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                      <Truck className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">Flexible Shipping</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      Choose between Air shipping (fast) or Sea shipping (economical) based on your needs
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-
-            <motion.div variants={staggerItem}>
-              <motion.div
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-              >
-                <Card className="text-center">
-                  <CardHeader>
-                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                      <Zap className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">Ready Now</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      Get Ghana-stocked products delivered within 24-48 hours for immediate needs
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-
-            <motion.div variants={staggerItem}>
-              <motion.div
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-              >
-                <Card className="text-center">
-                  <CardHeader>
-                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                      <Users className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">Group Buy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      Join group purchases to unlock tiered discounts and save more on bulk orders
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-
-            <motion.div variants={staggerItem}>
-              <motion.div
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-              >
-                <Card className="text-center">
-                  <CardHeader>
-                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                      <ShoppingBag className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">Mobile First</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      PWA technology ensures seamless shopping experience on web and mobile
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Shop by Category</h2>
-            <p className="text-muted-foreground">
-              Discover products across all categories
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">Flash Sales</h2>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="text-sm text-slate-600">Ends in:</span>
+                </div>
+                <div className="flex space-x-2">
+                  <div className="bg-primary text-white px-3 py-1 rounded text-sm font-bold">03</div>
+                  <div className="bg-primary text-white px-3 py-1 rounded text-sm font-bold">23</div>
+                  <div className="bg-primary text-white px-3 py-1 rounded text-sm font-bold">19</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 rotate-180" />
+              </Button>
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[
-              { name: 'Fashion', icon: '👗', href: '/categories/fashion' },
-              { name: 'Electronics', icon: '📱', href: '/categories/electronics' },
-              { name: 'Beauty', icon: '💄', href: '/categories/beauty' },
-              { name: 'Bulk Deals', icon: '📦', href: '/categories/bulk-deals' },
-              { name: 'Ready Now', icon: '⚡', href: '/ready-now' },
-            ].map((category) => (
-              <Link key={category.name} href={category.href}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-2">{category.icon}</div>
-                    <h3 className="font-semibold">{category.name}</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.slice(0, 4).map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="product-card group hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  <div className="relative overflow-hidden">
+                    <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 rounded-t-lg flex items-center justify-center">
+                      <div className="w-32 h-32 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg shadow-inner"></div>
+                    </div>
+                    {product.discount > 0 && (
+                      <Badge className="absolute top-3 left-3 badge-discount text-xs">
+                        -{product.discount}% OFF
+                      </Badge>
+                    )}
+                    {product.badge && (
+                      <Badge className={`absolute top-3 right-3 text-xs ${
+                        product.badge === 'New' ? 'badge-new' :
+                        product.badge === 'Hot' ? 'badge-sale' :
+                        product.badge === 'Best Seller' ? 'badge-featured' :
+                        product.badge === 'Popular' ? 'badge-new' :
+                        'badge-new'
+                      }`}>
+                        {product.badge}
+                      </Badge>
+                    )}
+                    <Button 
+                      size="icon" 
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white hover:bg-slate-50 shadow-lg"
+                    >
+                      <Heart className="h-4 w-4 text-slate-600" />
+                    </Button>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
+                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{product.brand}</span>
+                    </div>
+                    <div className="flex items-center mb-3">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < Math.floor(product.rating)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-slate-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-slate-600 ml-2">({product.reviews})</span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg font-bold text-primary">${product.price}</span>
+                      <span className="text-sm text-slate-400 line-through">
+                        ${product.originalPrice}
+                      </span>
+                    </div>
+                    <Button className="w-full btn-primary hover:shadow-lg">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Add to Cart
+                    </Button>
                   </CardContent>
                 </Card>
-              </Link>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Products Preview */}
-      <section className="py-16">
+      {/* Browse by Category */}
+      <section className="py-16 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
-            <p className="text-muted-foreground">
-              Discover our most popular items
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Browse by Category</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              Discover our wide range of products across different categories
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {[
-              {
-                name: 'iPhone 15 Pro',
-                price: 4500,
-                originalPrice: 5000,
-                image: '/api/placeholder/300/300',
-                badge: 'Ready Now',
-                rating: 4.8
-              },
-              {
-                name: 'Nike Air Max 270',
-                price: 350,
-                originalPrice: 400,
-                image: '/api/placeholder/300/300',
-                badge: 'Ready Now',
-                rating: 4.6
-              },
-              {
-                name: 'Ghana Made Shea Butter',
-                price: 25,
-                originalPrice: 30,
-                image: '/api/placeholder/300/300',
-                badge: 'Group Buy',
-                rating: 4.9
-              }
-            ].map((product) => (
-              <Card key={product.name} className="overflow-hidden hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-muted relative">
-                  <div className="absolute top-2 left-2">
-                    <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+              { name: 'Phones', icon: Smartphone, color: 'bg-blue-50 hover:bg-blue-100', iconColor: 'text-blue-600' },
+              { name: 'Computers', icon: Monitor, color: 'bg-red-50 hover:bg-red-100', iconColor: 'text-red-600' },
+              { name: 'Cameras', icon: Camera, color: 'bg-emerald-50 hover:bg-emerald-100', iconColor: 'text-emerald-600' },
+              { name: 'Headphones', icon: Headphones, color: 'bg-purple-50 hover:bg-purple-100', iconColor: 'text-purple-600' },
+              { name: 'Watches', icon: Watch, color: 'bg-amber-50 hover:bg-amber-100', iconColor: 'text-amber-600' },
+              { name: 'Gaming', icon: Gamepad2, color: 'bg-pink-50 hover:bg-pink-100', iconColor: 'text-pink-600' }
+            ].map((category, index) => (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Link href={`/categories/${category.name.toLowerCase()}`}>
+                  <Card className="text-center hover:shadow-lg transition-all duration-300 cursor-pointer group border-0 shadow-sm hover:shadow-lg">
+                    <CardContent className="p-6">
+                      <div className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}>
+                        <category.icon className={`h-8 w-8 ${category.iconColor}`} />
+                      </div>
+                      <h3 className="font-semibold text-sm text-slate-900">{category.name}</h3>
+                  </CardContent>
+                </Card>
+              </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Just For You */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-slate-900">Just For You</h2>
+            <Button variant="outline">
+              View All
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.slice(4, 8).map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="product-card group hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  <div className="relative overflow-hidden">
+                    <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 rounded-t-lg flex items-center justify-center">
+                      <div className="w-32 h-32 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg shadow-inner"></div>
+                    </div>
+                    {product.discount > 0 && (
+                      <Badge className="absolute top-3 left-3 badge-discount text-xs">
+                        -{product.discount}% OFF
+                      </Badge>
+                    )}
+                    {product.badge && (
+                      <Badge className={`absolute top-3 right-3 text-xs ${
+                        product.badge === 'New' ? 'badge-new' :
+                        product.badge === 'Hot' ? 'badge-sale' :
+                        product.badge === 'Best Seller' ? 'badge-featured' :
+                        product.badge === 'Popular' ? 'badge-new' :
+                        'badge-new'
+                      }`}>
                       {product.badge}
-                    </span>
+                      </Badge>
+                    )}
+                    <Button 
+                      size="icon" 
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white hover:bg-slate-50 shadow-lg"
+                    >
+                      <Heart className="h-4 w-4 text-slate-600" />
+                    </Button>
                   </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
+                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{product.brand}</span>
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2">{product.name}</h3>
-                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center mb-3">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
                           className={`h-4 w-4 ${
                             i < Math.floor(product.rating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-muted-foreground'
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-slate-300'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-sm text-muted-foreground">{product.rating}</span>
+                      <span className="text-sm text-slate-600 ml-2">({product.reviews})</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">GHS {product.price}</span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      GHS {product.originalPrice}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg font-bold text-primary">${product.price}</span>
+                      <span className="text-sm text-slate-400 line-through">
+                        ${product.originalPrice}
                     </span>
                   </div>
+                    <Button className="w-full btn-primary hover:shadow-lg">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Add to Cart
+                    </Button>
                 </CardContent>
               </Card>
+              </motion.div>
             ))}
-          </div>
-          
-          <div className="text-center mt-8">
-            <Button variant="outline" asChild>
-              <Link href="/categories">
-                View All Products
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of satisfied customers across Ghana and Africa
-          </p>
-          <Button size="lg" variant="secondary" asChild>
-            <Link href="/categories">
-              Explore Products
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+      {/* Features */}
+      <section className="py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { icon: Truck, title: 'Free Delivery', description: 'Free shipping on orders over $100' },
+              { icon: RotateCcw, title: 'Easy Returns', description: '30-day return policy' },
+              { icon: Shield, title: 'Secure Payment', description: '100% secure payment processing' },
+              { icon: Clock, title: '24/7 Support', description: 'Round-the-clock customer support' }
+            ].map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
+                <p className="text-slate-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
     </div>

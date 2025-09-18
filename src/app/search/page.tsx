@@ -51,88 +51,6 @@ interface FilterOptions {
   sortBy: string
 }
 
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Samsung Galaxy S24 Ultra',
-    slug: 'samsung-galaxy-s24-ultra',
-    price: 899.99,
-    originalPrice: 999.99,
-    image: '/api/placeholder/200/200',
-    rating: 4.8,
-    reviewCount: 124,
-    category: 'Electronics',
-    brand: 'Samsung',
-    inStock: true,
-    isReadyNow: true,
-    isGroupBuy: false,
-    shippingMethod: 'both'
-  },
-  {
-    id: '2',
-    name: 'iPhone 15 Pro Max',
-    slug: 'iphone-15-pro-max',
-    price: 1199.99,
-    image: '/api/placeholder/200/200',
-    rating: 4.9,
-    reviewCount: 89,
-    category: 'Electronics',
-    brand: 'Apple',
-    inStock: true,
-    isReadyNow: false,
-    isGroupBuy: true,
-    groupBuyDiscount: 15,
-    shippingMethod: 'air'
-  },
-  {
-    id: '3',
-    name: 'MacBook Pro M3',
-    slug: 'macbook-pro-m3',
-    price: 1999.99,
-    image: '/api/placeholder/200/200',
-    rating: 4.7,
-    reviewCount: 67,
-    category: 'Electronics',
-    brand: 'Apple',
-    inStock: true,
-    isReadyNow: false,
-    isGroupBuy: false,
-    shippingMethod: 'sea'
-  },
-  {
-    id: '4',
-    name: 'Nike Air Max 270',
-    slug: 'nike-air-max-270',
-    price: 149.99,
-    originalPrice: 179.99,
-    image: '/api/placeholder/200/200',
-    rating: 4.5,
-    reviewCount: 234,
-    category: 'Fashion',
-    brand: 'Nike',
-    inStock: true,
-    isReadyNow: true,
-    isGroupBuy: false,
-    shippingMethod: 'both'
-  },
-  {
-    id: '5',
-    name: 'Adidas Ultraboost 22',
-    slug: 'adidas-ultraboost-22',
-    price: 189.99,
-    image: '/api/placeholder/200/200',
-    rating: 4.6,
-    reviewCount: 156,
-    category: 'Fashion',
-    brand: 'Adidas',
-    inStock: true,
-    isReadyNow: true,
-    isGroupBuy: true,
-    groupBuyDiscount: 20,
-    shippingMethod: 'both'
-  }
-]
-
 const categories = ['All', 'Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Books', 'Beauty']
 const brands = ['All', 'Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'LG']
 const priceRanges = [
@@ -145,9 +63,10 @@ const priceRanges = [
 
 function SearchPageContent() {
   const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-  const [products, setProducts] = useState<Product[]>(mockProducts)
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts)
+  const [searchQuery, setSearchQuery] = useState(searchParams?.get('q') || '')
+  const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     category: 'All',
     brand: 'All',
@@ -161,8 +80,33 @@ function SearchPageContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
-    applyFilters()
-  }, [filters, searchQuery])
+    const fetchProducts = async () => {
+      setIsLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (searchQuery) params.append('search', searchQuery)
+        if (filters.category !== 'All') params.append('category', filters.category)
+        if (filters.brand !== 'All') params.append('brand', filters.brand)
+        if (filters.priceRange !== 'all') params.append('priceRange', filters.priceRange)
+        if (filters.rating !== 'all') params.append('minRating', filters.rating)
+        if (filters.shipping !== 'all') params.append('shipping', filters.shipping)
+        if (filters.sortBy !== 'relevance') params.append('sortBy', filters.sortBy)
+        
+        const response = await fetch(`/api/products?${params.toString()}`)
+        const data = await response.json()
+        
+        if (data.products) {
+          setProducts(data.products)
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [searchQuery, filters])
 
   const applyFilters = () => {
     let filtered = [...products]
@@ -193,7 +137,7 @@ function SearchPageContent() {
         if (filters.priceRange === '1000+') {
           return product.price >= 1000
         }
-        return product.price >= min && product.price <= max
+        return product.price >= (min || 0) && product.price <= (max || Infinity)
       })
     }
 
@@ -420,7 +364,7 @@ function SearchPageContent() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {filteredProducts.length} products found
+                  {products.length} products found
                 </h2>
                 {searchQuery && (
                   <p className="text-sm text-gray-600 mt-1">
@@ -461,13 +405,13 @@ function SearchPageContent() {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length > 0 ? (
+            {products.length > 0 ? (
               <div className={`grid gap-6 ${
                 viewMode === 'grid' 
                   ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                   : 'grid-cols-1'
               }`}>
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow">
                     <Link href={`/products/${product.slug}`}>
                       <CardContent className="p-4">

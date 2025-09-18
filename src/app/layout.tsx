@@ -1,25 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header, Footer } from "@/components/layout/header";
+import { AppChrome } from "@/components/layout/app-chrome";
 import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
 import { AuthProvider } from "@/lib/auth-context";
+import { CartProvider } from "@/lib/cart-context";
+import { WishlistProvider } from "@/lib/wishlist-context";
+import { NotificationProvider } from "@/lib/notifications-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { AnimatedLayout } from "@/components/layout/animated-layout";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: 'swap',
-  preload: true,
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: 'swap',
-  preload: true,
-});
+import { ClientSplashScreen } from "@/components/ui/client-splash-screen";
+import { LiveChatWidget } from "@/components/chat/live-chat-widget";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export const metadata: Metadata = {
   title: "Ihsan - Modern E-commerce for Ghana & Africa",
@@ -86,21 +79,39 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="font-sans antialiased"
         suppressHydrationWarning={true}
       >
+        <ClientSplashScreen />
         <AuthProvider>
-          <CurrencyProvider>
-            <AnimatedLayout>
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
-              <Footer />
-              <PWAInstallPrompt />
-            </AnimatedLayout>
-          </CurrencyProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <NotificationProvider>
+                <CurrencyProvider>
+                  <AnimatedLayout>
+                    <AppChrome>
+                      {children}
+                    </AppChrome>
+                    <PWAInstallPrompt />
+                  </AnimatedLayout>
+                  <LiveChatWidget />
+                </CurrencyProvider>
+              </NotificationProvider>
+            </WishlistProvider>
+          </CartProvider>
         </AuthProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </body>
     </html>
   );

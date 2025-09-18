@@ -1,41 +1,50 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toast } from 'react-hot-toast'
-import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2 } from 'lucide-react'
-import { fadeIn, slideInFromLeft, slideInFromRight, bounceIn, buttonVariants } from '@/lib/animations'
+import { toast } from 'react-toastify'
+import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2, Phone } from 'lucide-react'
+import { fadeIn, slideInFromLeft, slideInFromRight, bounceIn } from '@/lib/animations'
+import { useAuth } from '@/lib/auth-context'
+import { supabase, isSupabaseConfigured as supaConfigured } from '@/lib/supabase'
 
 interface AuthFormsProps {
   onSuccess?: () => void
+  initialTab?: 'login' | 'signup'
 }
 
-export default function AuthForms({ onSuccess }: AuthFormsProps) {
+export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [activeTab, setActiveTab] = useState('login')
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'login')
+  const router = useRouter()
+  const { login, signup, user } = useAuth()
+
+  // Check if Supabase is configured
+  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(true)
+
+  useEffect(() => {
+    setIsSupabaseConfigured(!!supaConfigured)
+  }, [])
 
   const handleGoogleLogin = async () => {
+    if (!isSupabaseConfigured) {
+      toast.error('Google Auth is not configured. Please set up Supabase first.')
+      return
+    }
+
     setIsLoading(true)
     try {
-      // Get Google Client ID from environment
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      
-      if (!googleClientId) {
-        toast.error('Google OAuth not configured. Please contact support.')
-        return
-      }
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -51,7 +60,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
       }
     } catch (error) {
       console.error('Google login error:', error)
-      toast.error('An error occurred during Google login')
+      toast.error('Google Auth is not properly configured. Please check your Supabase setup.')
     } finally {
       setIsLoading(false)
     }
@@ -60,45 +69,36 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
   const handleEmailLogin = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      await login(email, password)
+      toast.success('Login successful!')
       
-      if (error) {
-        toast.error(error.message)
+      // Redirect based on user role
+      if (user?.role === 'admin') {
+        router.replace('/admin')
+      } else if (user?.role === 'vendor_manager') {
+        router.replace('/manager')
+      } else if (user?.role === 'vendor') {
+        router.replace('/vendor')
       } else {
-        toast.success('Login successful!')
-        onSuccess?.()
+        onSuccess?.() ?? router.replace('/')
       }
-    } catch (error) {
-      toast.error('An error occurred during login')
+    } catch (error: any) {
+      console.error('Login error:', error)
+      toast.error(error.message || 'Login failed. Please check your credentials.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleEmailSignup = async (email: string, password: string, fullName: string) => {
+  const handleEmailSignup = async (email: string, password: string, fullName: string, phone: string) => {
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName
-          }
-        }
-      })
-      
-      if (error) {
-        toast.error(error.message)
-      } else {
-        toast.success('Account created! Please check your email to verify your account.')
-        onSuccess?.()
-      }
-    } catch (error) {
-      toast.error('An error occurred during signup')
+      await signup(email, password, fullName, phone)
+      toast.success('Account created successfully!')
+      onSuccess?.() ?? router.replace('/')
+    } catch (error: any) {
+      console.error('Signup error:', error)
+      toast.error(error.message || 'Signup failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -110,11 +110,12 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
+    const phone = formData.get('phone') as string
 
     if (activeTab === 'login') {
       await handleEmailLogin(email, password)
     } else {
-      await handleEmailSignup(email, password, fullName)
+      await handleEmailSignup(email, password, fullName, phone)
     }
   }
 
@@ -125,7 +126,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
       variants={fadeIn}
       className="w-full max-w-md mx-auto"
     >
-      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+      <Card className="border border-white/20 shadow-2xl bg-white/60 backdrop-blur-md dark:bg-slate-800/50 dark:border-white/10 rounded-xl">
         <CardHeader className="text-center space-y-2">
           <motion.div
             initial="initial"
@@ -136,11 +137,9 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             <ShoppingBag className="w-8 h-8 text-white" />
           </motion.div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            Welcome to Ihsan
+            Sign in or Sign up
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Your gateway to African e-commerce
-          </CardDescription>
+          
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -156,7 +155,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
               variant="outline"
               className="w-full h-12 text-base font-medium border-2 hover:bg-gray-50 transition-all duration-200"
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={isLoading || !isSupabaseConfigured}
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -180,17 +179,17 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
                   />
                 </svg>
               )}
-              Continue with Google
+              {!isSupabaseConfigured ? 'Google Auth (Not Configured)' : 'Continue with Google'}
             </Button>
           </motion.div>
 
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-white/30 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-white/70 dark:bg-slate-800/60 backdrop-blur-sm px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
@@ -201,8 +200,8 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             variants={slideInFromRight}
             transition={{ delay: 0.2 }}
           >
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'signup')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-lg">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
@@ -217,7 +216,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
                         id="login-email"
                         name="email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder={"name@example.com"}
                         className="pl-10"
                         required
                       />
@@ -232,9 +231,13 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
                         id="login-password"
                         name="password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
+                        placeholder={"••••••••"}
                         className="pl-10 pr-10"
                         required
+                        autoComplete="current-password"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
                       />
                       <Button
                         type="button"
@@ -251,6 +254,8 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Demo credentials removed for production */}
 
                   <Button
                     type="submit"
@@ -271,82 +276,103 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 mt-6">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-name"
-                        name="fullName"
-                        type="text"
-                        placeholder="Enter your full name"
-                        className="pl-10"
-                        required
-                      />
+                {isSupabaseConfigured ? (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-name"
+                          name="fullName"
+                          type="text"
+                          placeholder="John Doe"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        name="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        className="pl-10"
-                        required
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-phone">Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="+233 55 000 0000"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-password"
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a password"
-                        className="pl-10 pr-10"
-                        required
-                        minLength={6}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-email"
+                          name="email"
+                          type="email"
+                          placeholder="name@example.com"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    size="lg"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      'Create Account'
-                    )}
-                  </Button>
-                </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-password"
+                          name="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="At least 6 characters"
+                          className="pl-10 pr-10"
+                          required
+                          minLength={6}
+                          autoComplete="new-password"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </Button>
+                  </form>
+                ) : null}
               </TabsContent>
             </Tabs>
           </motion.div>

@@ -1,6 +1,8 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { User as SupabaseUser, Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import { UserRole, getUserPermissions, hasPermission } from '@/lib/roles'
 
 interface User {
@@ -9,16 +11,21 @@ interface User {
   fullName: string
   role: UserRole
   avatarUrl?: string
+  phone?: string
+  vendorStatus?: string
+  isActive?: boolean
 }
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  signup: (email: string, password: string, fullName?: string, phone?: string, role?: UserRole) => Promise<void>
+  logout: () => Promise<void>
   hasPermission: (permission: string) => boolean
   canAccessAdminPanel: () => boolean
   canManageRoles: () => boolean
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,52 +35,192 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
 
-  useEffect(() => {
-    // Mark as hydrated to prevent SSR/client mismatch
-    setIsHydrated(true)
-    
-    // Check for existing session
-    const checkAuth = async () => {
-      try {
-        // In a real app, this would check Supabase auth
-        const savedUser = localStorage.getItem('ihsan_user')
-        if (savedUser) {
-          setUser(JSON.parse(savedUser))
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  // Convert Supabase user to our User interface
+  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User | null> => {
+    try {
+      // Fetch user profile from our profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single()
 
+      if (error) {
+        console.error('Error fetching user profile:', error)
+        return null
+      }
+
+      return {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        fullName: profile?.full_name || '',
+        role: (profile?.role as UserRole) || 'customer',
+        avatarUrl: profile?.avatar_url || undefined,
+        phone: profile?.phone || undefined,
+        vendorStatus: profile?.vendor_status || undefined,
+        isActive: profile?.is_active ?? true
+      }
+    } catch (error) {
+      console.error('Error converting Supabase user:', error)
+      return null
+    }
+  }
+
+  // Check authentication status
+  const checkAuth = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Error getting session:', error)
+        setUser(null)
+        return
+      }
+
+      if (session?.user) {
+        const userData = await convertSupabaseUser(session.user)
+        setUser(userData)
+      } else {
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Listen for auth changes
+  useEffect(() => {
+    setIsHydrated(true)
     checkAuth()
+
+    const authAny = (supabase as any).auth
+    const hasOnAuthStateChange = authAny && typeof authAny.onAuthStateChange === 'function'
+
+    const { data: { subscription } } = hasOnAuthStateChange
+      ? authAny.onAuthStateChange(
+          async (event: any, session: any) => {
+            console.log('Auth state changed:', event, session?.user?.email)
+            
+            if (session?.user) {
+              const userData = await convertSupabaseUser(session.user)
+              setUser(userData)
+            } else {
+              setUser(null)
+            }
+            
+            setIsLoading(false)
+          }
+        )
+      : { data: { subscription: { unsubscribe: () => {} } } }
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // Mock login - in real app, this would use Supabase auth
-      const mockUser: User = {
-        id: '1',
-        email: 'admin@ihsan.com',
-        fullName: 'Admin User',
-        role: 'admin'
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) {
+        throw error
       }
-      
-      setUser(mockUser)
-      localStorage.setItem('ihsan_user', JSON.stringify(mockUser))
-    } catch (error) {
+
+      if (data.user) {
+        const userData = await convertSupabaseUser(data.user)
+        setUser(userData)
+      }
+    } catch (error: unknown) {
       console.error('Login failed:', error)
+      const message = error instanceof Error ? error.message : 'Login failed. Please check your credentials.'
+      throw new Error(message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const signup = async (
+    email: string, 
+    password: string, 
+    fullName?: string, 
+    phone?: string, 
+    role: UserRole = 'customer'
+  ) => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phone,
+            role: role
+          }
+        }
+      })
+
+      if (error) {
+        throw error
+      }
+
+      if (data.user) {
+        // The profile will be created automatically by the database trigger
+        // But we can also create it manually to ensure it exists
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: email,
+            full_name: fullName || '',
+            phone: phone || '',
+            role: role,
+            is_active: true
+          })
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError)
+          // Don't fail the signup if profile creation fails
+        }
+
+        const userData = await convertSupabaseUser(data.user)
+        setUser(userData)
+      }
+    } catch (error) {
+      console.error('Signup failed:', error)
       throw error
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('ihsan_user')
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Logout error:', error)
+      }
+      setUser(null)
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
+  const refreshUser = async () => {
+    try {
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+      if (supabaseUser) {
+        const userData = await convertSupabaseUser(supabaseUser)
+        setUser(userData)
+      }
+    } catch (error) {
+      console.error('Refresh user failed:', error)
+    }
   }
 
   const hasUserPermission = (permission: string) => {
@@ -95,10 +242,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isLoading,
     login,
+    signup,
     logout,
     hasPermission: hasUserPermission,
     canAccessAdminPanel,
     canManageRoles,
+    refreshUser,
   }
 
   // During SSR and before hydration, show loading state
@@ -132,7 +281,15 @@ export function withRoleAccess(
   requiredRole?: UserRole
 ) {
   return function RoleProtectedComponent(props: any) {
-    const { user, hasPermission } = useAuth()
+    const { user, hasPermission, isLoading } = useAuth()
+
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      )
+    }
 
     if (!user) {
       return (
@@ -183,7 +340,11 @@ export function PermissionGate({
   children: React.ReactNode
   fallback?: React.ReactNode
 }) {
-  const { user, hasPermission } = useAuth()
+  const { user, hasPermission, isLoading } = useAuth()
+
+  if (isLoading) {
+    return fallback || null
+  }
 
   if (!user) {
     return fallback || null

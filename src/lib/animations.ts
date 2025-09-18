@@ -1,4 +1,4 @@
-import { Variants } from 'framer-motion'
+import { Variants, Transition } from 'framer-motion'
 
 // Page transition animations
 export const pageVariants: Variants = {
@@ -19,7 +19,7 @@ export const pageVariants: Variants = {
   }
 }
 
-export const pageTransition = {
+export const pageTransition: Transition = {
   type: 'tween',
   ease: 'anticipate',
   duration: 0.4

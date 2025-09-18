@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   Shield, 
   Smartphone, 
@@ -322,7 +322,7 @@ export default function OTPVerification({
                   {!otpSent && (
                     <Button
                       onClick={sendSMSOTP}
-                      disabled={isLoading || !phoneNumber || isCooldownActive}
+                      disabled={isLoading || !phoneNumber || !!isCooldownActive}
                       className="w-full"
                     >
                       {isLoading ? (

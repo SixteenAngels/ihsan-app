@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   MapPin, 
   Navigation, 
@@ -323,8 +323,8 @@ export default function DeliveryMap({
       ).filter(Boolean) as DeliveryOrder[]
 
       setOptimizedRoute({
-        origin: currentLocation,
-        destination: optimizedLocations[optimizedLocations.length - 1],
+        origin: currentLocation || { lat: 0, lng: 0 },
+        destination: optimizedLocations[optimizedLocations.length - 1] || { lat: 0, lng: 0 },
         waypoints: optimizedLocations.slice(1, -1)
       })
 
@@ -362,7 +362,11 @@ export default function DeliveryMap({
 
   const clearRoute = () => {
     if (directionsRenderer) {
-      directionsRenderer.setDirections({ routes: [] })
+      directionsRenderer.setDirections({
+        routes: [],
+        request: {} as any,
+        geocoded_waypoints: []
+      })
     }
     setOptimizedRoute(null)
   }
@@ -439,7 +443,6 @@ export default function DeliveryMap({
                 ref={mapRef}
                 id="delivery-map"
                 className="w-full h-96 bg-muted rounded-lg border"
-                style={{ minHeight: '384px' }}
               />
 
               {/* Controls */}

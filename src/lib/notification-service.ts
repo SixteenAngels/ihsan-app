@@ -1,451 +1,329 @@
-// Notification service for handling push, email, and SMS notifications
-import sgMail from '@sendgrid/mail'
-import twilio from 'twilio'
-
-// Initialize SendGrid lazily
-let sendGridInitialized = false
-
-const initializeSendGrid = () => {
-  if (!sendGridInitialized && process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    sendGridInitialized = true
-  }
-}
-
-// Initialize Twilio lazily
-let twilioClient: any = null
-
-const getTwilioClient = () => {
-  if (!twilioClient && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  }
-  return twilioClient
-}
-
-export interface NotificationTemplate {
-  id: string
-  name: string
-  type: 'push' | 'email' | 'sms'
-  subject?: string
-  content: string
-  variables: string[]
-}
-
-export interface NotificationRecipient {
-  userId: string
-  email?: string
-  phone?: string
-  pushToken?: string
-  preferences: {
-    email: boolean
-    sms: boolean
-    push: boolean
-  }
-}
+// Notification service for automatic notifications
+import { supabase } from '@/lib/supabase'
+import { EmailService } from '@/lib/email-service'
 
 export interface NotificationData {
+  user_id: string
+  title: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+  data?: any
+  action_url?: string
+}
+
+export interface NotificationRequest {
   templateId: string
-  recipients: NotificationRecipient[]
-  variables: Record<string, any>
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  scheduledAt?: string
-  metadata?: Record<string, any>
+  recipients: string[]
+  variables?: Record<string, any>
+  priority?: 'low' | 'medium' | 'high'
 }
 
-export interface NotificationResult {
-  success: boolean
-  messageId?: string
-  error?: string
-  channel: 'push' | 'email' | 'sms'
-}
+export class NotificationService {
+  // Send notification to a specific user
+  static async sendNotification(data: NotificationData) {
+    try {
+      // Store notification in database
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: data.user_id,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          data: data.data,
+          action_url: data.action_url,
+          is_read: false
+        })
 
-class NotificationService {
-  private templates: Map<string, NotificationTemplate> = new Map()
+      if (error) {
+        console.error('Error sending notification:', error)
+        return false
+      }
 
-  constructor() {
-    this.initializeTemplates()
+      // Send email notification if user has email preferences
+      try {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('email, full_name, notification_preferences')
+          .eq('id', data.user_id)
+          .single()
+
+        if (userProfile?.email && userProfile?.notification_preferences?.email) {
+          await EmailService.sendEmail({
+            to: userProfile.email,
+            subject: data.title,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">${data.title}</h2>
+                <p>${data.message}</p>
+                ${data.action_url ? `<p><a href="${process.env.NEXT_PUBLIC_APP_URL}${data.action_url}" style="color: #2563eb;">View Details</a></p>` : ''}
+              </div>
+            `,
+            text: `${data.title}\n\n${data.message}${data.action_url ? `\n\nView Details: ${process.env.NEXT_PUBLIC_APP_URL}${data.action_url}` : ''}`
+          })
+        }
+      } catch (emailError) {
+        console.error('Email notification failed:', emailError)
+        // Don't fail the entire notification if email fails
+      }
+
+      return true
+    } catch (error) {
+      console.error('Notification service error:', error)
+      return false
+    }
   }
 
-  private initializeTemplates() {
-    const defaultTemplates: NotificationTemplate[] = [
+  // Send notification to multiple users
+  static async sendBulkNotifications(notifications: NotificationData[]) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert(
+          notifications.map(notification => ({
+            user_id: notification.user_id,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            data: notification.data,
+            action_url: notification.action_url,
+            is_read: false
+          }))
+        )
+
+      if (error) {
+        console.error('Error sending bulk notifications:', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Bulk notification service error:', error)
+      return false
+    }
+  }
+
+  // Order-related notifications
+  static async notifyOrderCreated(orderId: string, userId: string, orderNumber: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Order Confirmed',
+      message: `Your order #${orderNumber} has been confirmed and is being processed.`,
+      type: 'success',
+      data: { order_id: orderId, order_number: orderNumber },
+      action_url: `/order-success?order=${orderNumber}`
+    })
+  }
+
+  static async notifyOrderStatusUpdate(orderId: string, userId: string, orderNumber: string, status: string) {
+    const statusMessages = {
+      'confirmed': 'Your order has been confirmed and is being prepared.',
+      'shipped': 'Your order has been shipped and is on its way.',
+      'delivered': 'Your order has been delivered successfully.',
+      'cancelled': 'Your order has been cancelled.',
+      'refunded': 'Your order has been refunded.'
+    }
+
+    const statusIcons = {
+      'confirmed': 'success',
+      'shipped': 'info',
+      'delivered': 'success',
+      'cancelled': 'error',
+      'refunded': 'warning'
+    } as const
+
+    return this.sendNotification({
+      user_id: userId,
+      title: `Order ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+      message: `Order #${orderNumber}: ${statusMessages[status as keyof typeof statusMessages] || 'Status updated.'}`,
+      type: statusIcons[status as keyof typeof statusIcons] || 'info',
+      data: { order_id: orderId, order_number: orderNumber, status },
+      action_url: `/my-account/orders`
+    })
+  }
+
+  static async notifyPaymentReceived(orderId: string, userId: string, orderNumber: string, amount: number) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Payment Received',
+      message: `Payment of GHS ${amount.toFixed(2)} for order #${orderNumber} has been received.`,
+      type: 'success',
+      data: { order_id: orderId, order_number: orderNumber, amount },
+      action_url: `/order-success?order=${orderNumber}`
+    })
+  }
+
+  // Product-related notifications
+  static async notifyProductApproved(productId: string, userId: string, productName: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Product Approved',
+      message: `Your product "${productName}" has been approved and is now live.`,
+      type: 'success',
+      data: { product_id: productId, product_name: productName },
+      action_url: `/vendor/products`
+    })
+  }
+
+  static async notifyProductRejected(productId: string, userId: string, productName: string, reason?: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Product Rejected',
+      message: `Your product "${productName}" was rejected.${reason ? ` Reason: ${reason}` : ''}`,
+      type: 'error',
+      data: { product_id: productId, product_name: productName, reason },
+      action_url: `/vendor/products`
+    })
+  }
+
+  // Vendor-related notifications
+  static async notifyVendorApproved(userId: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Vendor Account Approved',
+      message: 'Congratulations! Your vendor account has been approved. You can now start selling.',
+      type: 'success',
+      data: { vendor_status: 'approved' },
+      action_url: `/vendor`
+    })
+  }
+
+  static async notifyVendorSuspended(userId: string, reason?: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Vendor Account Suspended',
+      message: `Your vendor account has been suspended.${reason ? ` Reason: ${reason}` : ''}`,
+      type: 'error',
+      data: { vendor_status: 'suspended', reason },
+      action_url: `/support`
+    })
+  }
+
+  // System notifications
+  static async notifySystemMaintenance(userId: string, scheduledTime: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'Scheduled Maintenance',
+      message: `System maintenance is scheduled for ${scheduledTime}. Some features may be temporarily unavailable.`,
+      type: 'warning',
+      data: { maintenance_time: scheduledTime },
+      action_url: undefined
+    })
+  }
+
+  static async notifyNewFeature(userId: string, featureName: string, description: string) {
+    return this.sendNotification({
+      user_id: userId,
+      title: 'New Feature Available',
+      message: `${featureName}: ${description}`,
+      type: 'info',
+      data: { feature_name: featureName },
+      action_url: `/features`
+    })
+  }
+
+  // Admin notifications for important events
+  static async notifyAdminNewOrder(orderId: string, orderNumber: string, totalAmount: number) {
+    // Get all admin users
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'admin')
+
+    if (!admins || admins.length === 0) return false
+
+    const notifications = admins.map((admin: any) => ({
+      user_id: admin.id,
+      title: 'New Order Received',
+      message: `New order #${orderNumber} worth GHS ${totalAmount.toFixed(2)} has been placed.`,
+      type: 'info' as const,
+      data: { order_id: orderId, order_number: orderNumber, total_amount: totalAmount },
+      action_url: `/admin/orders`
+    }))
+
+    return this.sendBulkNotifications(notifications)
+  }
+
+  static async notifyAdminNewVendorApplication(userId: string, vendorName: string) {
+    // Get all admin and manager users
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('role', ['admin', 'manager'])
+
+    if (!admins || admins.length === 0) return false
+
+    const notifications = admins.map((admin: any) => ({
+      user_id: admin.id,
+      title: 'New Vendor Application',
+      message: `${vendorName} has applied to become a vendor.`,
+      type: 'info' as const,
+      data: { vendor_id: userId, vendor_name: vendorName },
+      action_url: `/admin/vendors`
+    }))
+
+    return this.sendBulkNotifications(notifications)
+  }
+
+  // Send notification using template (for API route)
+  static async sendTemplateNotification(request: NotificationRequest) {
+    const templates = this.getAllTemplates()
+    const template = templates.find(t => t.id === request.templateId)
+    
+    if (!template) {
+      throw new Error(`Template ${request.templateId} not found`)
+    }
+
+    const notifications = request.recipients.map(userId => ({
+      user_id: userId,
+      title: this.replaceVariables(template.title, request.variables || {}),
+      message: this.replaceVariables(template.message, request.variables || {}),
+      type: template.type,
+      data: request.variables,
+      action_url: template.action_url
+    }))
+
+    return this.sendBulkNotifications(notifications)
+  }
+
+  // Get all notification templates
+  static getAllTemplates() {
+    return [
       {
-        id: 'order_confirmed',
-        name: 'Order Confirmation',
-        type: 'email',
-        subject: 'Order Confirmed - {{orderNumber}}',
-        content: `
-          <h2>Order Confirmed!</h2>
-          <p>Dear {{customerName}},</p>
-          <p>Your order {{orderNumber}} has been confirmed and is being processed.</p>
-          <p><strong>Order Details:</strong></p>
-          <ul>
-            {{#items}}
-            <li>{{name}} - Qty: {{quantity}} - {{price}}</li>
-            {{/items}}
-          </ul>
-          <p><strong>Total: {{totalAmount}}</strong></p>
-          <p>We'll notify you when your order is ready for delivery.</p>
-          <p>Thank you for choosing Ihsan!</p>
-        `,
-        variables: ['customerName', 'orderNumber', 'items', 'totalAmount']
+        id: 'order_created',
+        title: 'Order Confirmed',
+        message: 'Your order #{order_number} has been confirmed and is being processed.',
+        type: 'success' as const,
+        action_url: '/orders/{order_id}'
       },
       {
         id: 'order_shipped',
-        name: 'Order Shipped',
-        type: 'push',
-        content: 'Your order {{orderNumber}} is on its way! Track your delivery in real-time.',
-        variables: ['orderNumber']
+        title: 'Order Shipped',
+        message: 'Your order #{order_number} has been shipped and is on its way.',
+        type: 'info' as const,
+        action_url: '/track/{order_number}'
       },
       {
-        id: 'order_delivered',
-        name: 'Order Delivered',
-        type: 'sms',
-        content: 'Your order {{orderNumber}} has been delivered successfully. Thank you for shopping with Ihsan!',
-        variables: ['orderNumber']
+        id: 'payment_received',
+        title: 'Payment Received',
+        message: 'Payment for order #{order_number} has been received successfully.',
+        type: 'success' as const,
+        action_url: '/orders/{order_id}'
       },
       {
         id: 'group_buy_reminder',
-        name: 'Group Buy Reminder',
-        type: 'push',
-        content: 'Group buy for {{productName}} ends in {{timeLeft}}. Join now to save {{discount}}%!',
-        variables: ['productName', 'timeLeft', 'discount']
-      },
-      {
-        id: 'delivery_assigned',
-        name: 'Delivery Assigned',
-        type: 'push',
-        content: 'New delivery assigned: {{orderNumber}} to {{customerName}} at {{address}}',
-        variables: ['orderNumber', 'customerName', 'address']
-      },
-      {
-        id: 'payment_failed',
-        name: 'Payment Failed',
-        type: 'email',
-        subject: 'Payment Failed - {{orderNumber}}',
-        content: `
-          <h2>Payment Failed</h2>
-          <p>Dear {{customerName}},</p>
-          <p>We were unable to process your payment for order {{orderNumber}}.</p>
-          <p>Please update your payment method and try again.</p>
-          <p><a href="{{paymentLink}}">Update Payment Method</a></p>
-          <p>If you need assistance, please contact our support team.</p>
-        `,
-        variables: ['customerName', 'orderNumber', 'paymentLink']
-      },
-      {
-        id: 'otp_verification',
-        name: 'OTP Verification',
-        type: 'sms',
-        content: 'Your Ihsan verification code is: {{otpCode}}. Valid for 5 minutes.',
-        variables: ['otpCode']
+        title: 'Group Buy Reminder',
+        message: 'Don\'t miss out! The group buy for {product_name} ends soon.',
+        type: 'warning' as const,
+        action_url: '/group-buy/{group_buy_id}'
       }
     ]
+  }
 
-    defaultTemplates.forEach(template => {
-      this.templates.set(template.id, template)
+  // Helper method to replace variables in strings
+  private static replaceVariables(text: string, variables: Record<string, any>): string {
+    return text.replace(/\{(\w+)\}/g, (match, key) => {
+      return variables[key] || match
     })
-  }
-
-  async sendNotification(data: NotificationData): Promise<NotificationResult[]> {
-    const template = this.templates.get(data.templateId)
-    if (!template) {
-      throw new Error(`Template ${data.templateId} not found`)
-    }
-
-    const results: NotificationResult[] = []
-
-    for (const recipient of data.recipients) {
-      try {
-        let result: NotificationResult
-
-        switch (template.type) {
-          case 'email':
-            result = await this.sendEmail(template, recipient, data.variables)
-            break
-          case 'sms':
-            result = await this.sendSMS(template, recipient, data.variables)
-            break
-          case 'push':
-            result = await this.sendPushNotification(template, recipient, data.variables)
-            break
-          default:
-            throw new Error(`Unsupported notification type: ${template.type}`)
-        }
-
-        results.push(result)
-      } catch (error) {
-        results.push({
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          channel: template.type
-        })
-      }
-    }
-
-    return results
-  }
-
-  private async sendEmail(
-    template: NotificationTemplate,
-    recipient: NotificationRecipient,
-    variables: Record<string, any>
-  ): Promise<NotificationResult> {
-    if (!recipient.email || !recipient.preferences.email) {
-      throw new Error('Email not available or disabled for recipient')
-    }
-
-    initializeSendGrid()
-
-    const processedContent = this.processTemplate(template.content!, variables)
-    const processedSubject = template.subject ? this.processTemplate(template.subject, variables) : ''
-
-    const msg = {
-      to: recipient.email,
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ihsan.com',
-      subject: processedSubject,
-      html: processedContent,
-      trackingSettings: {
-        clickTracking: { enable: true },
-        openTracking: { enable: true }
-      }
-    }
-
-    try {
-      const response = await sgMail.send(msg)
-      return {
-        success: true,
-        messageId: response[0].headers['x-message-id'],
-        channel: 'email'
-      }
-    } catch (error) {
-      throw new Error(`Email sending failed: ${error}`)
-    }
-  }
-
-  private async sendSMS(
-    template: NotificationTemplate,
-    recipient: NotificationRecipient,
-    variables: Record<string, any>
-  ): Promise<NotificationResult> {
-    if (!recipient.phone || !recipient.preferences.sms) {
-      throw new Error('Phone number not available or SMS disabled for recipient')
-    }
-
-    const client = getTwilioClient()
-    if (!client) {
-      throw new Error('Twilio not configured')
-    }
-
-    const processedContent = this.processTemplate(template.content, variables)
-
-    try {
-      const message = await client.messages.create({
-        body: processedContent,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: recipient.phone
-      })
-
-      return {
-        success: true,
-        messageId: message.sid,
-        channel: 'sms'
-      }
-    } catch (error) {
-      throw new Error(`SMS sending failed: ${error}`)
-    }
-  }
-
-  private async sendPushNotification(
-    template: NotificationTemplate,
-    recipient: NotificationRecipient,
-    variables: Record<string, any>
-  ): Promise<NotificationResult> {
-    if (!recipient.pushToken || !recipient.preferences.push) {
-      throw new Error('Push token not available or push notifications disabled for recipient')
-    }
-
-    const processedContent = this.processTemplate(template.content, variables)
-
-    try {
-      // This would integrate with OneSignal, FCM, or other push notification service
-      // For now, we'll simulate the API call
-      const response = await fetch('/api/notifications/push', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: recipient.pushToken,
-          title: 'Ihsan',
-          body: processedContent,
-          data: variables
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Push notification failed')
-      }
-
-      const result = await response.json()
-      return {
-        success: true,
-        messageId: result.messageId,
-        channel: 'push'
-      }
-    } catch (error) {
-      throw new Error(`Push notification failed: ${error}`)
-    }
-  }
-
-  private processTemplate(content: string, variables: Record<string, any>): string {
-    let processed = content
-
-    // Replace simple variables {{variableName}}
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g')
-      processed = processed.replace(regex, String(value))
-    })
-
-    // Handle array variables {{#items}}...{{/items}}
-    processed = processed.replace(/{{#(\w+)}}(.*?){{\/\1}}/gs, (match, arrayName, template) => {
-      const array = variables[arrayName]
-      if (!Array.isArray(array)) return ''
-
-      return array.map(item => {
-        let itemTemplate = template
-        Object.entries(item).forEach(([key, value]) => {
-          const regex = new RegExp(`{{${key}}}`, 'g')
-          itemTemplate = itemTemplate.replace(regex, String(value))
-        })
-        return itemTemplate
-      }).join('')
-    })
-
-    return processed
-  }
-
-  async sendBulkNotification(
-    templateId: string,
-    recipients: NotificationRecipient[],
-    variables: Record<string, any>,
-    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
-  ): Promise<NotificationResult[]> {
-    return this.sendNotification({
-      templateId,
-      recipients,
-      variables,
-      priority
-    })
-  }
-
-  async scheduleNotification(
-    templateId: string,
-    recipients: NotificationRecipient[],
-    variables: Record<string, any>,
-    scheduledAt: string,
-    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
-  ): Promise<void> {
-    // This would integrate with a job queue system like Bull, Agenda, or similar
-    // For now, we'll store it in the database for processing
-    console.log(`Scheduling notification ${templateId} for ${scheduledAt}`)
-  }
-
-  getTemplate(templateId: string): NotificationTemplate | undefined {
-    return this.templates.get(templateId)
-  }
-
-  getAllTemplates(): NotificationTemplate[] {
-    return Array.from(this.templates.values())
-  }
-
-  addTemplate(template: NotificationTemplate): void {
-    this.templates.set(template.id, template)
-  }
-
-  updateTemplate(templateId: string, updates: Partial<NotificationTemplate>): void {
-    const template = this.templates.get(templateId)
-    if (template) {
-      this.templates.set(templateId, { ...template, ...updates })
-    }
-  }
-
-  deleteTemplate(templateId: string): void {
-    this.templates.delete(templateId)
-  }
-
-  // Utility methods for common notification scenarios
-  async notifyOrderConfirmation(orderData: any): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'order_confirmed',
-      [{ userId: orderData.customerId, email: orderData.customerEmail, preferences: { email: true, sms: false, push: true } }],
-      {
-        customerName: orderData.customerName,
-        orderNumber: orderData.orderNumber,
-        items: orderData.items,
-        totalAmount: orderData.totalAmount
-      }
-    )
-  }
-
-  async notifyOrderShipped(orderData: any): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'order_shipped',
-      [{ userId: orderData.customerId, pushToken: orderData.pushToken, preferences: { email: false, sms: false, push: true } }],
-      {
-        orderNumber: orderData.orderNumber
-      }
-    )
-  }
-
-  async notifyOrderDelivered(orderData: any): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'order_delivered',
-      [{ userId: orderData.customerId, phone: orderData.customerPhone, preferences: { email: false, sms: true, push: false } }],
-      {
-        orderNumber: orderData.orderNumber
-      }
-    )
-  }
-
-  async notifyGroupBuyReminder(groupBuyData: any): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'group_buy_reminder',
-      groupBuyData.participants.map((p: any) => ({
-        userId: p.userId,
-        pushToken: p.pushToken,
-        preferences: { email: false, sms: false, push: true }
-      })),
-      {
-        productName: groupBuyData.productName,
-        timeLeft: groupBuyData.timeLeft,
-        discount: groupBuyData.discount
-      }
-    )
-  }
-
-  async notifyDeliveryAgent(deliveryData: any): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'delivery_assigned',
-      [{ userId: deliveryData.agentId, pushToken: deliveryData.pushToken, preferences: { email: false, sms: false, push: true } }],
-      {
-        orderNumber: deliveryData.orderNumber,
-        customerName: deliveryData.customerName,
-        address: deliveryData.address
-      }
-    )
-  }
-
-  async sendOTP(phone: string, otpCode: string): Promise<NotificationResult[]> {
-    return this.sendBulkNotification(
-      'otp_verification',
-      [{ userId: 'temp', phone, preferences: { email: false, sms: true, push: false } }],
-      { otpCode }
-    )
   }
 }
-
-// Export singleton instance
-export const notificationService = new NotificationService()
-
-// Export types and utilities
-export { NotificationService }

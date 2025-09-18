@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   Camera, 
   Upload, 
@@ -349,6 +349,8 @@ export default function PictureSearch({ onResultSelect }: PictureSearchProps) {
               accept="image/*"
               onChange={handleFileSelect}
               className="hidden"
+              aria-label="Upload image for search"
+              title="Upload image for search"
             />
           </CardContent>
         </Card>

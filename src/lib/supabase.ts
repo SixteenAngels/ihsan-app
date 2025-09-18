@@ -1,9 +1,40 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Debug logging
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing');
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+console.log('Is Supabase Configured:', isSupabaseConfigured);
+
+// Create a mock client if environment variables are missing
+const mockClient = {
+  auth: {
+    onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    signInWithPassword: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+    signUp: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+    signOut: () => Promise.resolve({ error: null }),
+    signInWithOAuth: () => Promise.resolve({ data: { url: null }, error: { message: 'Supabase not configured' } }),
+    admin: {
+      createUser: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
+      deleteUser: () => Promise.resolve({ error: { message: 'Supabase not configured' } })
+    }
+  },
+  from: () => ({
+    select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }),
+    insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }),
+    update: () => ({ eq: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }) }),
+    upsert: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
+  })
+}
+
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
+  : mockClient as any
 
 // Database types
 export interface Database {
@@ -177,7 +208,7 @@ export interface Database {
           price: number
           compare_price: number | null
           stock_quantity: number
-          attributes: Record<string, any>
+          attributes: Record<string, unknown>
           is_active: boolean
           created_at: string
           updated_at: string
@@ -190,7 +221,7 @@ export interface Database {
           price: number
           compare_price?: number | null
           stock_quantity?: number
-          attributes?: Record<string, any>
+          attributes?: Record<string, unknown>
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -203,7 +234,7 @@ export interface Database {
           price?: number
           compare_price?: number | null
           stock_quantity?: number
-          attributes?: Record<string, any>
+          attributes?: Record<string, unknown>
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -277,8 +308,8 @@ export interface Database {
           payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
           payment_method: string | null
           payment_reference: string | null
-          shipping_address: Record<string, any>
-          billing_address: Record<string, any>
+          shipping_address: Record<string, unknown>
+          billing_address: Record<string, unknown>
           notes: string | null
           estimated_delivery_date: string | null
           delivered_at: string | null
@@ -299,8 +330,8 @@ export interface Database {
           payment_status?: 'pending' | 'paid' | 'failed' | 'refunded'
           payment_method?: string | null
           payment_reference?: string | null
-          shipping_address: Record<string, any>
-          billing_address: Record<string, any>
+          shipping_address: Record<string, unknown>
+          billing_address: Record<string, unknown>
           notes?: string | null
           estimated_delivery_date?: string | null
           delivered_at?: string | null
@@ -321,8 +352,8 @@ export interface Database {
           payment_status?: 'pending' | 'paid' | 'failed' | 'refunded'
           payment_method?: string | null
           payment_reference?: string | null
-          shipping_address?: Record<string, any>
-          billing_address?: Record<string, any>
+          shipping_address?: Record<string, unknown>
+          billing_address?: Record<string, unknown>
           notes?: string | null
           estimated_delivery_date?: string | null
           delivered_at?: string | null
@@ -374,7 +405,7 @@ export interface Database {
           min_quantity: number
           max_quantity: number
           current_quantity: number
-          price_tiers: Record<string, any>
+          price_tiers: Record<string, unknown>
           start_date: string
           end_date: string
           is_active: boolean
@@ -391,7 +422,7 @@ export interface Database {
           min_quantity: number
           max_quantity: number
           current_quantity?: number
-          price_tiers: Record<string, any>
+          price_tiers: Record<string, unknown>
           start_date: string
           end_date: string
           is_active?: boolean
@@ -408,7 +439,7 @@ export interface Database {
           min_quantity?: number
           max_quantity?: number
           current_quantity?: number
-          price_tiers?: Record<string, any>
+          price_tiers?: Record<string, unknown>
           start_date?: string
           end_date?: string
           is_active?: boolean
@@ -527,7 +558,7 @@ export interface Database {
           type: 'order_update' | 'group_buy_reminder' | 'ready_now_alert' | 'general'
           title: string
           message: string
-          data: Record<string, any> | null
+          data: Record<string, unknown> | null
           is_read: boolean
           created_at: string
           updated_at: string
@@ -538,7 +569,7 @@ export interface Database {
           type: 'order_update' | 'group_buy_reminder' | 'ready_now_alert' | 'general'
           title: string
           message: string
-          data?: Record<string, any> | null
+          data?: Record<string, unknown> | null
           is_read?: boolean
           created_at?: string
           updated_at?: string
@@ -549,7 +580,7 @@ export interface Database {
           type?: 'order_update' | 'group_buy_reminder' | 'ready_now_alert' | 'general'
           title?: string
           message?: string
-          data?: Record<string, any> | null
+          data?: Record<string, unknown> | null
           is_read?: boolean
           created_at?: string
           updated_at?: string

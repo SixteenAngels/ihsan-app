@@ -6,6 +6,7 @@ export interface Location {
   lng: number
   address?: string
   timestamp?: string
+  accuracy?: number
 }
 
 export interface DeliveryRoute {
@@ -71,12 +72,14 @@ class MapsService {
 
     try {
       const results = await this.geocoder.geocode({ address })
-      if (results.results.length > 0) {
-        const location = results.results[0].geometry.location
-        return {
-          lat: location.lat(),
-          lng: location.lng(),
-          address: results.results[0].formatted_address
+      if (results.results && results.results.length > 0) {
+        const location = results.results[0]?.geometry?.location
+        if (location) {
+          return {
+            lat: location.lat(),
+            lng: location.lng(),
+            address: results.results[0]?.formatted_address
+          }
         }
       }
       return null
@@ -97,8 +100,8 @@ class MapsService {
         location: { lat: location.lat, lng: location.lng }
       })
       
-      if (results.results.length > 0) {
-        return results.results[0].formatted_address
+      if (results.results && results.results.length > 0) {
+        return results.results[0]?.formatted_address || 'Unknown address'
       }
       return null
     } catch (error) {
@@ -129,15 +132,15 @@ class MapsService {
 
       const result = await this.directionsService.route(request)
       
-      if (result.routes.length > 0) {
+      if (result.routes && result.routes.length > 0) {
         const routeData = result.routes[0]
-        const leg = routeData.legs[0]
+        const leg = routeData?.legs?.[0]
         
         return {
           ...route,
-          distance: leg.distance?.value || 0,
-          duration: leg.duration?.value || 0,
-          polyline: routeData.overview_polyline?.encoded_polyline || ''
+          distance: leg?.distance?.value || 0,
+          duration: leg?.duration?.value || 0,
+          polyline: routeData?.overview_polyline || ''
         }
       }
       
@@ -154,10 +157,10 @@ class MapsService {
     try {
       // Use Google Maps Directions API with optimizeWaypoints
       const request: google.maps.DirectionsRequest = {
-        origin: deliveries[0],
-        destination: deliveries[deliveries.length - 1],
-        waypoints: deliveries.slice(1, -1).map(location => ({
-          location: { lat: location.lat, lng: location.lng },
+        origin: deliveries[0] ? { lat: deliveries[0].lat, lng: deliveries[0].lng } : { lat: 0, lng: 0 },
+        destination: deliveries[deliveries.length - 1] ? { lat: deliveries[deliveries.length - 1]!.lat, lng: deliveries[deliveries.length - 1]!.lng } : { lat: 0, lng: 0 },
+        waypoints: deliveries.slice(1, -1).filter(location => location).map(location => ({
+          location: { lat: location!.lat, lng: location!.lng },
           stopover: true
         })),
         travelMode: google.maps.TravelMode.DRIVING,
@@ -166,15 +169,21 @@ class MapsService {
 
       const result = await this.directionsService!.route(request)
       
-      if (result.routes.length > 0) {
-        const optimizedWaypoints = result.routes[0].waypoint_order || []
-        const optimizedDeliveries: Location[] = [deliveries[0]]
+      if (result.routes && result.routes.length > 0) {
+        const optimizedWaypoints = result.routes[0]?.waypoint_order || []
+        const optimizedDeliveries: Location[] = [deliveries[0]!]
         
         optimizedWaypoints.forEach((index: number) => {
-          optimizedDeliveries.push(deliveries[index + 1])
+          const delivery = deliveries[index + 1]
+          if (delivery) {
+            optimizedDeliveries.push(delivery)
+          }
         })
         
-        optimizedDeliveries.push(deliveries[deliveries.length - 1])
+        const lastDelivery = deliveries[deliveries.length - 1]
+        if (lastDelivery) {
+          optimizedDeliveries.push(lastDelivery)
+        }
         return optimizedDeliveries
       }
       
@@ -295,12 +304,14 @@ class MapsService {
           duration: { text: `${Math.round(route.duration! / 60)} min`, value: route.duration! },
           start_address: route.origin.address || '',
           end_address: route.destination.address || '',
-          start_location: { lat: () => route.origin.lat, lng: () => route.origin.lng },
-          end_location: { lat: () => route.destination.lat, lng: () => route.destination.lng },
-          steps: []
-        }],
+          start_location: new google.maps.LatLng(route.origin.lat, route.origin.lng),
+          end_location: new google.maps.LatLng(route.destination.lat, route.destination.lng),
+          steps: [],
+          traffic_speed_entry: [],
+          via_waypoints: []
+        } as google.maps.DirectionsLeg],
         overview_path: route.polyline ? this.decodePolyline(route.polyline) : [],
-        overview_polyline: { encoded_polyline: route.polyline || '' },
+        overview_polyline: route.polyline || '',
         bounds: new google.maps.LatLngBounds(
           { lat: route.origin.lat, lng: route.origin.lng },
           { lat: route.destination.lat, lng: route.destination.lng }
@@ -310,8 +321,8 @@ class MapsService {
         waypoint_order: [],
         copyrights: '',
         fare: undefined
-      }]
-    })
+      } as google.maps.DirectionsRoute]
+    } as google.maps.DirectionsResult)
   }
 
   private decodePolyline(encoded: string): google.maps.LatLng[] {

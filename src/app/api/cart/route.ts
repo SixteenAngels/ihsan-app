@@ -1,279 +1,216 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// GET /api/cart - Get user's cart (supports both authenticated users and guests)
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('user_id')
-    const guestId = searchParams.get('guest_id')
+    const userId = searchParams.get('userId')
 
-    // Support both authenticated users and guests
-    const identifier = userId || guestId
-    const isGuest = !userId && guestId
-
-    if (!identifier) {
-      return NextResponse.json({
-        success: false,
-        error: 'User ID or Guest ID is required'
-      }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    // For guests, we'll use a different approach - store in localStorage/sessionStorage
-    // For now, we'll simulate guest cart data
-    if (isGuest) {
-      // In a real implementation, you might store guest carts in a separate table
-      // or use session storage on the client side
-      const mockGuestCart = {
-        items: [],
-        summary: {
-          totalItems: 0,
-          subtotal: 0,
-          shipping: 0,
-          tax: 0,
-          total: 0
-        }
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: mockGuestCart,
-        isGuest: true
-      })
-    }
-
-    // For authenticated users, query the database
     const { data, error } = await supabase
       .from('cart_items')
-      .select('*')
+      .select(`
+        id,
+        product_id,
+        variant_id,
+        quantity,
+        created_at,
+        products (
+          id,
+          name,
+          slug,
+          price,
+          compare_price,
+          images,
+          brand,
+          categories (
+            name
+          )
+        ),
+        product_variants (
+          id,
+          name,
+          price
+        )
+      `)
       .eq('user_id', userId)
-      .limit(10)
+      .order('created_at', { ascending: false })
 
     if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message,
-        details: 'Cart table query failed'
-      }, { status: 500 })
+      console.error('Supabase cart fetch error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Calculate totals
-    const cartItems = data || []
-    const subtotal = cartItems.reduce((sum, item) => {
-      const price = parseFloat(item.price) || 0
-      const quantity = parseInt(item.quantity) || 0
-      return sum + (quantity * price)
-    }, 0)
-    const totalItems = cartItems.reduce((sum, item) => {
-      const quantity = parseInt(item.quantity) || 0
-      return sum + quantity
-    }, 0)
+    // Transform the data to match our CartItem interface
+    const items = data?.map((item: any) => ({
+      id: item.id,
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      name: item.products?.name || 'Unknown Product',
+      price: item.product_variants?.price || item.products?.price || 0,
+      originalPrice: item.products?.compare_price || undefined,
+      quantity: item.quantity,
+      image: item.products?.images?.[0] || '/api/placeholder/200/200',
+      slug: item.products?.slug || '',
+      vendor: item.products?.brand || undefined,
+      category: item.products?.categories?.name || undefined
+    })) || []
 
     return NextResponse.json({
       success: true,
-      data: {
-        items: cartItems,
-        summary: {
-          totalItems,
-          subtotal,
-          shipping: 0,
-          tax: subtotal * 0.15,
-          total: subtotal + (subtotal * 0.15)
-        }
-      },
-      isGuest: false
+      items
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      details: 'Cart API error'
-    }, { status: 500 })
+    console.error('Cart fetch error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }
 
-// POST /api/cart - Add item to cart (TEST VERSION)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { user_id, product_id, quantity = 1, variant_id } = body
+    const { product_id, variant_id, quantity = 1, user_id } = body
 
-    if (!user_id || !product_id) {
-      return NextResponse.json({
-        success: false,
-        error: 'User ID and Product ID are required'
-      }, { status: 400 })
+    if (!product_id || !user_id) {
+      return NextResponse.json({ error: 'Product ID and User ID are required' }, { status: 400 })
     }
 
     // Check if item already exists in cart
     const { data: existingItem } = await supabase
       .from('cart_items')
-      .select('*')
+      .select('id, quantity')
       .eq('user_id', user_id)
       .eq('product_id', product_id)
       .eq('variant_id', variant_id || null)
       .single()
 
     if (existingItem) {
-      // Update quantity
-      const { data, error } = await supabase
+      // Update existing item quantity
+      const { error: updateError } = await supabase
         .from('cart_items')
         .update({ 
           quantity: existingItem.quantity + quantity,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingItem.id)
-        .select()
-        .single()
 
-      if (error) {
-        return NextResponse.json({
-          success: false,
-          error: error.message
-        }, { status: 500 })
+      if (updateError) {
+        console.error('Supabase cart update error:', updateError)
+        return NextResponse.json({ error: updateError.message }, { status: 500 })
       }
-
-      return NextResponse.json({
-        success: true,
-        data,
-        message: 'Cart item quantity updated'
-      })
     } else {
-      // Add new item
-      const { data, error } = await supabase
+      // Add new item to cart
+      const { error: insertError } = await supabase
         .from('cart_items')
         .insert({
           user_id,
           product_id,
           variant_id: variant_id || null,
-          quantity,
-          price: 0 // Will be updated with actual product price
+          quantity
         })
-        .select()
-        .single()
 
-      if (error) {
-        return NextResponse.json({
-          success: false,
-          error: error.message
-        }, { status: 500 })
+      if (insertError) {
+        console.error('Supabase cart insert error:', insertError)
+        return NextResponse.json({ error: insertError.message }, { status: 500 })
       }
-
-      return NextResponse.json({
-        success: true,
-        data,
-        message: 'Item added to cart'
-      })
     }
 
-  } catch (error) {
     return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+      success: true,
+      message: 'Item added to cart successfully'
+    })
+
+  } catch (error) {
+    console.error('Cart add error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }
 
-// PUT /api/cart - Update cart item (TEST VERSION)
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { item_id, quantity } = body
+    const { product_id, variant_id, quantity, user_id } = body
 
-    if (!item_id || quantity === undefined) {
-      return NextResponse.json({
-        success: false,
-        error: 'Item ID and quantity are required'
-      }, { status: 400 })
+    if (!product_id || !user_id || quantity === undefined) {
+      return NextResponse.json({ error: 'Product ID, User ID, and quantity are required' }, { status: 400 })
     }
 
-    if (quantity <= 0) {
-      // Remove item
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('id', item_id)
-
-      if (error) {
-        return NextResponse.json({
-          success: false,
-          error: error.message
-        }, { status: 500 })
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Item removed from cart'
-      })
+    if (quantity < 1) {
+      return NextResponse.json({ error: 'Quantity must be at least 1' }, { status: 400 })
     }
 
-    // Update quantity
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('cart_items')
       .update({ 
         quantity,
         updated_at: new Date().toISOString()
       })
-      .eq('id', item_id)
-      .select()
-      .single()
+      .eq('user_id', user_id)
+      .eq('product_id', product_id)
+      .eq('variant_id', variant_id || null)
 
     if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
+      console.error('Supabase cart update error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      data,
-      message: 'Cart item updated'
+      message: 'Cart item updated successfully'
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Cart update error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }
 
-// DELETE /api/cart - Clear user's cart (TEST VERSION)
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('user_id')
+    const product_id = searchParams.get('product_id')
+    const variant_id = searchParams.get('variant_id')
+    const user_id = searchParams.get('user_id')
 
-    if (!userId) {
-      return NextResponse.json({
-        success: false,
-        error: 'User ID is required'
-      }, { status: 400 })
+    if (!product_id || !user_id) {
+      return NextResponse.json({ error: 'Product ID and User ID are required' }, { status: 400 })
     }
 
     const { error } = await supabase
       .from('cart_items')
       .delete()
-      .eq('user_id', userId)
+      .eq('user_id', user_id)
+      .eq('product_id', product_id)
+      .eq('variant_id', variant_id || null)
 
     if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
+      console.error('Supabase cart delete error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Cart cleared successfully'
+      message: 'Item removed from cart successfully'
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Cart delete error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }

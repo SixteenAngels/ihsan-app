@@ -273,6 +273,8 @@ export default function VendorMarketplace() {
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
                     className="px-3 py-2 border rounded-md text-sm"
+                    aria-label="Sort vendors by"
+                    title="Sort vendors by"
                   >
                     <option value="rating">Highest Rated</option>
                     <option value="products">Most Products</option>

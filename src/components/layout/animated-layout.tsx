@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import SplashScreen from '@/components/ui/splash-screen'
+import { SplashScreen } from '@/components/ui/splash-screen'
 import { pageVariants, pageTransition } from '@/lib/animations'
 
 interface AnimatedLayoutProps {

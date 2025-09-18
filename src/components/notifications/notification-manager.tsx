@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   Bell, 
   BellOff, 
@@ -20,7 +20,11 @@ import {
   XCircle,
   AlertCircle,
   Clock,
-  User
+  User,
+  Package,
+  Users,
+  Truck,
+  Shield
 } from 'lucide-react'
 import { fadeIn, slideInFromLeft, staggerContainer, staggerItem } from '@/lib/animations'
 

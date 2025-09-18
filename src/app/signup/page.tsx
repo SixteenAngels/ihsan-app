@@ -12,11 +12,16 @@ export default function SignupPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        router.push('/')
+        // Redirect based on user role
+        const userRole = (session.user.user_metadata && session.user.user_metadata.role) || 'customer'
+        if (userRole === 'admin') router.push('/admin')
+        else if (userRole === 'manager') router.push('/manager')
+        else if (userRole === 'vendor') router.push('/vendor')
+        else router.push('/')
       }
     }
     checkAuth()
   }, [router])
 
-  return <EnhancedAuthForms onSuccess={() => router.push('/')} />
+  return <EnhancedAuthForms initialTab="signup" onSuccess={() => router.push('/')} />
 }

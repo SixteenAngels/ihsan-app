@@ -36,48 +36,91 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Demo and documentation files
-*_REPORT.md
-*_COMPLETE.md
-*_STATUS.md
-*_FIXES.md
-*_PLAN.md
-*_SETUP.md
-*_INTEGRATION.md
-*_RESULTS.md
-*_SUCCESS.md
-*_OPTIMIZATION.md
-*_IMPLEMENTATION.md
-*_COMPLETION.md
-*_SUMMARY.md
-*_COMMANDS.md
-*_GUIDE.md
-*_POLICY.md
-*_SCHEMA.md
-*_FIX.sql
-ADD_SAMPLE_DATA.sql
-FIX_*.sql
-QUICK_*.sql
-PURE_*.sql
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Test API endpoints
-src/app/api/test-*
-src/app/api/*-test
-src/app/api/debug-*
-src/app/api/fix-*
-src/app/api/quick-*
-src/app/api/comprehensive-*
-src/app/api/check-*
-src/app/api/create-*
-src/app/api/investigate-*
-src/app/api/supabase-status
-src/app/api/table-structure
-src/app/api/database-status
-src/app/api/health
-src/app/api/cart-simple
-src/app/api/cart-working
-src/app/api/chat/test
+# OS
+Thumbs.db
 
-# Setup scripts
-setup-*.bat
-setup-*.sh
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+.env.production
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

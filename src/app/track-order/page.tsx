@@ -136,7 +136,7 @@ const statusConfig = {
 
 function OrderTrackingPageContent() {
   const searchParams = useSearchParams()
-  const [orderNumber, setOrderNumber] = useState(searchParams.get('order') || '')
+  const [orderNumber, setOrderNumber] = useState(searchParams?.get('order') || '')
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -181,6 +181,14 @@ function OrderTrackingPageContent() {
     const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered']
     const currentIndex = statusOrder.indexOf(status)
     return ((currentIndex + 1) / statusOrder.length) * 100
+  }
+
+  const getProgressClass = (status: string) => {
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered']
+    const index = statusOrder.indexOf(status)
+    const widthClasses = ['w-1/6', 'w-2/6', 'w-3/6', 'w-4/6', 'w-5/6', 'w-full']
+    if (index < 0) return 'w-0'
+    return widthClasses[Math.min(index, widthClasses.length - 1)]
   }
 
   return (
@@ -293,8 +301,7 @@ function OrderTrackingPageContent() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${getProgressPercentage(order.status)}%` }}
+                        className={`bg-primary h-2 rounded-full transition-all duration-500 ${getProgressClass(order.status)}`}
                       />
                     </div>
                   </div>

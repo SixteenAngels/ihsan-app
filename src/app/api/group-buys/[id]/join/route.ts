@@ -4,10 +4,10 @@ import { supabase } from '@/lib/supabase'
 // POST /api/group-buys/[id]/join - Join a group buy
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { user_id, quantity } = body
 
@@ -103,10 +103,10 @@ export async function POST(
 // DELETE /api/group-buys/[id]/join - Leave a group buy
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
 

@@ -518,7 +518,7 @@ class PaymentService {
         }
       }
 
-      const stats = data.reduce((acc, payment) => {
+      const stats = data.reduce((acc: any, payment: any) => {
         acc.totalEscrowPayments++
         acc[`${payment.status}Amount`] += payment.amount
         return acc

@@ -1,67 +1,106 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// GET /api/orders/[id] - Get single order
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
+    const orderNumber = id
 
-    const { data, error } = await supabase
+    if (!orderNumber) {
+      return NextResponse.json({ error: 'Order number is required' }, { status: 400 })
+    }
+
+    const { data: order, error: orderError } = await supabase
       .from('orders')
       .select(`
-        *,
+        id,
+        order_number,
+        user_id,
+        status,
+        shipping_method,
+        shipping_cost,
+        subtotal,
+        tax_amount,
+        total_amount,
+        currency,
+        payment_status,
+        payment_method,
+        shipping_address,
+        billing_address,
+        created_at,
+        updated_at,
         order_items (
           id,
+          product_id,
+          variant_id,
           quantity,
           unit_price,
-          total_price,
           products (
-            id,
             name,
-            images,
-            slug
+            slug,
+            images
           ),
           product_variants (
-            id,
-            name
+            name,
+            price
           )
         )
       `)
-      .eq('id', id)
+      .eq('order_number', orderNumber)
       .single()
 
-    if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 404 })
+    if (orderError) {
+      console.error('Supabase order fetch error:', orderError)
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
+
+    // Transform the order data to include product names
+    const transformedOrder = {
+      ...order,
+      items: order.order_items?.map((item: any) => ({
+        product_name: item.product_variants?.name || item.products?.name || 'Unknown Product',
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        image: item.products?.images?.[0] || '/api/placeholder/100/100'
+      })) || []
     }
 
     return NextResponse.json({
       success: true,
-      data
+      order: transformedOrder
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Order fetch error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }
 
-// PUT /api/orders/[id] - Update order status (Admin only)
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
+    const orderNumber = id
     const body = await request.json()
-    const { status, payment_status, notes } = body
+    const { status, payment_status, shipping_method, tracking_number } = body
+
+    if (!orderNumber) {
+      return NextResponse.json({ error: 'Order number is required' }, { status: 400 })
+    }
 
     const updateData: any = {
       updated_at: new Date().toISOString()
@@ -69,37 +108,31 @@ export async function PUT(
 
     if (status) updateData.status = status
     if (payment_status) updateData.payment_status = payment_status
-    if (notes) updateData.notes = notes
-
-    // Set delivered_at if status is delivered
-    if (status === 'delivered') {
-      updateData.delivered_at = new Date().toISOString()
-    }
+    if (shipping_method) updateData.shipping_method = shipping_method
+    if (tracking_number) updateData.tracking_number = tracking_number
 
     const { data, error } = await supabase
       .from('orders')
       .update(updateData)
-      .eq('id', id)
+      .eq('order_number', orderNumber)
       .select()
       .single()
 
     if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
+      console.error('Supabase order update error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      data,
-      message: 'Order updated successfully'
+      order: data
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error('Order update error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 }

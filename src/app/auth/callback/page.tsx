@@ -13,6 +13,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // Handle the OAuth callback
         const { data, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -25,10 +26,30 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // Success - redirect to home or intended page
-          setTimeout(() => {
+          // Set role cookies based on metadata if present (fallback to customer)
+          const user = data.session.user
+          const role = (user.user_metadata && (user.user_metadata.role as string)) || 'customer'
+
+          // Clear existing auth cookies
+          document.cookie = 'adminAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          document.cookie = 'managerAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          document.cookie = 'vendorAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+
+          // Set appropriate auth cookie based on role
+          if (role === 'admin') document.cookie = 'adminAuth=true; path=/; max-age=86400'
+          if (role === 'manager' || role === 'vendor_manager') document.cookie = 'managerAuth=true; path=/; max-age=86400'
+          if (role === 'vendor') document.cookie = 'vendorAuth=true; path=/; max-age=86400'
+
+          // Redirect by role
+          if (role === 'admin') {
+            router.push('/admin')
+          } else if (role === 'manager' || role === 'vendor_manager') {
+            router.push('/manager')
+          } else if (role === 'vendor') {
+            router.push('/vendor')
+          } else {
             router.push('/')
-          }, 1500)
+          }
         } else {
           // No session - redirect to login
           router.push('/login')
@@ -65,15 +86,13 @@ export default function AuthCallback() {
         
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">Completing Sign In</h1>
-          <p className="text-muted-foreground">
-            Please wait while we complete your authentication...
-          </p>
+          <p className="text-muted-foreground">Please wait while we complete your authentication...</p>
         </div>
         
         <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
           <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
-          <div className="h-2 w-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-          <div className="h-2 w-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+          <div className="h-2 w-2 bg-primary rounded-full animate-pulse delay-200" />
+          <div className="h-2 w-2 bg-primary rounded-full animate-pulse delay-400" />
         </div>
       </motion.div>
     </motion.div>

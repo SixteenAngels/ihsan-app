@@ -177,7 +177,7 @@ export default function LoyaltyProgram() {
 
   const currentTier = loyaltyTiers[userLevel - 1]
   const nextTier = loyaltyTiers[userLevel]
-  const progressToNext = nextTier ? ((userCoins - currentTier.minCoins) / (nextTier.minCoins - currentTier.minCoins)) * 100 : 100
+  const progressToNext = nextTier && currentTier ? ((userCoins - currentTier.minCoins) / (nextTier.minCoins - currentTier.minCoins)) * 100 : 100
 
   const redeemReward = (reward: Reward) => {
     if (userCoins >= reward.cost && reward.available) {
@@ -233,7 +233,7 @@ export default function LoyaltyProgram() {
                 
                 <div className="text-right">
                   <Badge variant="secondary" className="mb-2">
-                    {currentTier.name} Member
+                    {currentTier?.name || 'Bronze'} Member
                   </Badge>
                   {nextTier && (
                     <div className="text-sm text-muted-foreground">
@@ -313,16 +313,16 @@ export default function LoyaltyProgram() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <div className={`p-2 rounded-full ${currentTier.color}`}>
-                          <currentTier.icon className="w-6 h-6 text-white" />
+                        <div className={`p-2 rounded-full ${currentTier?.color || 'bg-yellow-500'}`}>
+                          {currentTier?.icon && <currentTier.icon className="w-6 h-6 text-white" />}
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold">{currentTier.name} Member</h3>
-                          <p className="text-sm text-muted-foreground">Level {currentTier.level}</p>
+                          <h3 className="text-lg font-semibold">{currentTier?.name || 'Bronze'} Member</h3>
+                          <p className="text-sm text-muted-foreground">Level {currentTier?.level || 1}</p>
                         </div>
                       </div>
                       <ul className="space-y-2">
-                        {currentTier.benefits.map((benefit, index) => (
+                        {currentTier?.benefits?.map((benefit, index) => (
                           <li key={index} className="flex items-center gap-2 text-sm">
                             <CheckCircle className="w-4 h-4 text-green-500" />
                             {benefit}

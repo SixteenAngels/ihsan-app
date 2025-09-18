@@ -1,99 +1,118 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// GET /api/users - Get users (Admin only)
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  const email = searchParams.get('email')
+  const role = searchParams.get('role')
+  const vendorStatus = searchParams.get('vendorStatus')
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '10')
+
   try {
-    const { searchParams } = new URL(request.url)
-    const role = searchParams.get('role')
-    const search = searchParams.get('search')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = parseInt(searchParams.get('offset') || '0')
-
-    let query = supabase
+    // Use 'as any' to avoid deep type instantiation issues on select typing
+    let query: any = supabase
       .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+      .select('id,email,full_name,phone,avatar_url,role,created_at,updated_at,vendor_status', { count: 'exact' } as any)
 
-    if (role) {
-      query = query.eq('role', role)
+    if (id) query = query.eq('id', id)
+    if (email) query = query.eq('email', email)
+    if (role) query = query.eq('role', role)
+    if (vendorStatus) query = query.eq('vendor_status' as any, vendorStatus as any)
+
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    const { data, error, count } = await query.range(from, to)
+    if (error) throw error
+
+    if (id || email) {
+      const single = data && data[0]
+      if (!single) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json(single)
     }
 
-    if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
-    }
-
-    const { data, error, count } = await query
-
-    if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
-    }
-
+    const totalCount = (count ?? (data ? data.length : 0)) as number
+    const pages = Math.ceil((totalCount || 0) / limit) || 1
     return NextResponse.json({
-      success: true,
-      data: data || [],
+      users: data || [],
       pagination: {
+        page,
         limit,
-        offset,
-        total: count || 0,
-        hasMore: (data?.length || 0) === limit
-      }
+        total: totalCount,
+        pages,
+      },
     })
-
-  } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+  } catch (e) {
+    return NextResponse.json({ users: [], pagination: { page, limit, total: 0, pages: 1 } })
   }
 }
 
-// PUT /api/users/[id] - Update user role (Admin only)
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const { id } = params
     const body = await request.json()
-    const { role, full_name, phone } = body
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([
+        {
+          id: body.id,
+          email: body.email,
+          full_name: body.fullName || null,
+          phone: body.phone || null,
+          avatar_url: body.avatarUrl || null,
+          role: body.role || 'customer',
+          vendor_status: body.vendorStatus || null,
+        } as any,
+      ])
+      .select('id,email,full_name,phone,avatar_url,role,created_at,updated_at,vendor_status')
+      .single()
 
-    const updateData: any = {
-      updated_at: new Date().toISOString()
+    if (error) throw error
+    return NextResponse.json(data, { status: 201 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, ...updateData } = body
+
+    const patch: any = {
+      email: updateData.email,
+      full_name: updateData.fullName,
+      phone: updateData.phone,
+      avatar_url: updateData.avatarUrl,
+      role: updateData.role,
+      vendor_status: updateData.vendorStatus,
+      updated_at: new Date().toISOString(),
     }
-
-    if (role) updateData.role = role
-    if (full_name) updateData.full_name = full_name
-    if (phone) updateData.phone = phone
+    Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k])
 
     const { data, error } = await supabase
       .from('profiles')
-      .update(updateData)
+      .update(patch)
       .eq('id', id)
-      .select()
+      .select('id,email,full_name,phone,avatar_url,role,created_at,updated_at,vendor_status')
       .single()
 
-    if (error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
-    }
-
-    return NextResponse.json({
-      success: true,
-      data,
-      message: 'User updated successfully'
-    })
-
+    if (error) throw error
+    return NextResponse.json(data)
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+  try {
+    const { error } = await supabase.from('profiles').delete().eq('id', id)
+    if (error) throw error
+    return NextResponse.json({ message: 'User deleted successfully' })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
   }
 }

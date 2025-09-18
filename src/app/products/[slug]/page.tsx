@@ -128,7 +128,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           <div className="space-y-4">
             <div className="aspect-square bg-muted rounded-lg overflow-hidden">
               <Image
-                src={product.images[0]}
+                src={product.images?.[0] || '/api/placeholder/600/600'}
                 alt={product.name}
                 width={600}
                 height={600}

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   Truck, 
   MapPin, 
@@ -29,6 +29,7 @@ import {
 import { fadeIn, slideInFromLeft, staggerContainer, staggerItem } from '@/lib/animations'
 import LocationTracker from '@/components/maps/location-tracker'
 import DeliveryMap from '@/components/maps/delivery-map'
+import { Location } from '@/lib/maps-service'
 
 interface DeliveryOrder {
   id: string
@@ -36,12 +37,7 @@ interface DeliveryOrder {
   customerName: string
   customerPhone: string
   customerAddress: string
-  deliveryAddress: {
-    street: string
-    city: string
-    region: string
-    coordinates?: { lat: number; lng: number }
-  }
+  deliveryAddress: Location
   items: Array<{
     id: string
     name: string
@@ -92,10 +88,9 @@ export default function DeliveryAgentDashboard() {
         customerPhone: '+233 24 123 4567',
         customerAddress: '123 Main Street, Accra',
         deliveryAddress: {
-          street: '123 Main Street',
-          city: 'Accra',
-          region: 'Greater Accra',
-          coordinates: { lat: 5.6037, lng: -0.1870 }
+          lat: 5.6037,
+          lng: -0.1870,
+          address: '123 Main Street, Accra, Greater Accra'
         },
         items: [
           { id: '1', name: 'iPhone 15 Pro', quantity: 1 },
@@ -113,10 +108,9 @@ export default function DeliveryAgentDashboard() {
         customerPhone: '+233 24 987 6543',
         customerAddress: '456 Oak Avenue, Kumasi',
         deliveryAddress: {
-          street: '456 Oak Avenue',
-          city: 'Kumasi',
-          region: 'Ashanti',
-          coordinates: { lat: 6.6885, lng: -1.6244 }
+          lat: 6.6885,
+          lng: -1.6244,
+          address: '456 Oak Avenue, Kumasi, Ashanti'
         },
         items: [
           { id: '3', name: 'Ghana Shea Butter', quantity: 3 }
@@ -132,10 +126,9 @@ export default function DeliveryAgentDashboard() {
         customerPhone: '+233 24 555 1234',
         customerAddress: '789 Pine Road, Takoradi',
         deliveryAddress: {
-          street: '789 Pine Road',
-          city: 'Takoradi',
-          region: 'Western',
-          coordinates: { lat: 4.8845, lng: -1.7554 }
+          lat: 4.8845,
+          lng: -1.7554,
+          address: '789 Pine Road, Takoradi, Western'
         },
         items: [
           { id: '4', name: 'Samsung Galaxy S24', quantity: 1 }
@@ -227,8 +220,8 @@ export default function DeliveryAgentDashboard() {
     }
   }
 
-  const openMaps = (coordinates: { lat: number; lng: number }) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`
+  const openMaps = (location: Location) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`
     window.open(url, '_blank')
   }
 
@@ -329,9 +322,13 @@ export default function DeliveryAgentDashboard() {
         <motion.div variants={staggerItem}>
           <DeliveryMap
             orders={orders}
-            currentLocation={currentLocation}
+            currentLocation={currentLocation || undefined}
             onOrderSelect={(order) => {
-              setSelectedOrder(order)
+              // Find the original order with customerAddress
+              const originalOrder = orders.find(o => o.id === order.id)
+              if (originalOrder) {
+                setSelectedOrder(originalOrder)
+              }
               console.log('Order selected:', order)
             }}
             onRouteOptimize={(optimizedOrders) => {
@@ -384,8 +381,7 @@ export default function DeliveryAgentDashboard() {
                           Delivery Address
                         </div>
                         <div className="text-sm">
-                          {order.deliveryAddress.street}<br />
-                          {order.deliveryAddress.city}, {order.deliveryAddress.region}
+                          {order.deliveryAddress.address}
                         </div>
                       </div>
                       <div>
@@ -421,7 +417,7 @@ export default function DeliveryAgentDashboard() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
-                        onClick={() => openMaps(order.deliveryAddress.coordinates!)}
+                        onClick={() => openMaps(order.deliveryAddress)}
                         className="flex-1"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
@@ -482,8 +478,7 @@ export default function DeliveryAgentDashboard() {
                           Delivery Address
                         </div>
                         <div className="text-sm">
-                          {order.deliveryAddress.street}<br />
-                          {order.deliveryAddress.city}, {order.deliveryAddress.region}
+                          {order.deliveryAddress.address}
                         </div>
                       </div>
                       <div>
@@ -500,7 +495,7 @@ export default function DeliveryAgentDashboard() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
-                        onClick={() => openMaps(order.deliveryAddress.coordinates!)}
+                        onClick={() => openMaps(order.deliveryAddress)}
                         className="flex-1"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
@@ -576,8 +571,7 @@ export default function DeliveryAgentDashboard() {
                           Delivered To
                         </div>
                         <div className="text-sm">
-                          {order.deliveryAddress.street}<br />
-                          {order.deliveryAddress.city}, {order.deliveryAddress.region}
+                          {order.deliveryAddress.address}
                         </div>
                       </div>
                     </div>

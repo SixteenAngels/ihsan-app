@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -99,49 +99,34 @@ const faqData: FAQ[] = [
   }
 ]
 
-const mockTickets: SupportTicket[] = [
-  {
-    id: 'TKT-001',
-    subject: 'Order delivery delay',
-    status: 'in_progress',
-    priority: 'medium',
-    createdAt: '2024-01-15T10:30:00Z',
-    lastUpdated: '2024-01-16T14:20:00Z',
-    category: 'Delivery'
-  },
-  {
-    id: 'TKT-002',
-    subject: 'Payment not processed',
-    status: 'resolved',
-    priority: 'high',
-    createdAt: '2024-01-12T09:15:00Z',
-    lastUpdated: '2024-01-13T16:45:00Z',
-    category: 'Payment'
-  },
-  {
-    id: 'TKT-003',
-    subject: 'Product quality issue',
-    status: 'open',
-    priority: 'medium',
-    createdAt: '2024-01-18T11:20:00Z',
-    lastUpdated: '2024-01-18T11:20:00Z',
-    category: 'Product'
-  }
-]
-
 const categories = ['All', 'Delivery', 'Group Buy', 'Shipping', 'Orders', 'Payment', 'Returns', 'App', 'Security']
 
 export default function SupportPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null)
-  const [tickets] = useState<SupportTicket[]>(mockTickets)
+  const [tickets, setTickets] = useState<SupportTicket[]>([])
+  const [loading, setLoading] = useState(true)
   const [newTicket, setNewTicket] = useState({
     subject: '',
     category: '',
     priority: 'medium',
     description: ''
   })
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        // In a real app, this would fetch from support API
+        // For now, we'll use empty arrays since we removed dummy data
+        setTickets([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
   const filteredFAQs = faqData.filter(faq => {
     const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -332,7 +317,15 @@ export default function SupportPage() {
               </div>
 
               <div className="space-y-4">
-                {tickets.map((ticket) => (
+                {loading ? (
+                  <div className="text-center py-8 text-slate-600">Loading tickets...</div>
+                ) : tickets.length === 0 ? (
+                  <div className="text-center py-8 text-slate-600">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                    <p>No support tickets found</p>
+                  </div>
+                ) : (
+                  tickets.map((ticket) => (
                   <Card key={ticket.id}>
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start">
@@ -359,7 +352,8 @@ export default function SupportPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>
@@ -385,6 +379,8 @@ export default function SupportPage() {
                     <Label htmlFor="category">Category</Label>
                     <select
                       id="category"
+                      name="category"
+                      aria-label="Select category"
                       value={newTicket.category}
                       onChange={(e) => setNewTicket(prev => ({ ...prev, category: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -404,6 +400,8 @@ export default function SupportPage() {
                   <Label htmlFor="priority">Priority</Label>
                   <select
                     id="priority"
+                    name="priority"
+                    aria-label="Select priority level"
                     value={newTicket.priority}
                     onChange={(e) => setNewTicket(prev => ({ ...prev, priority: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"

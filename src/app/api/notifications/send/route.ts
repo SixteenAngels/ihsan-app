@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { notificationService } from '@/lib/notification-service'
+import { NotificationService } from '@/lib/notification-service'
 
 // POST /api/notifications/send - Send notification
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    const results = await notificationService.sendNotification({
+    const results = await NotificationService.sendTemplateNotification({
       templateId,
       recipients,
       variables: variables || {},
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 // GET /api/notifications/templates - Get all notification templates
 export async function GET(request: Request) {
   try {
-    const templates = notificationService.getAllTemplates()
+    const templates = NotificationService.getAllTemplates()
 
     return NextResponse.json({
       success: true,
