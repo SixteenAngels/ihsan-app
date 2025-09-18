@@ -29,9 +29,7 @@ export default function HomeScreen() {
           }
           setFeatured(results);
         } else {
-          const pr = await fetch(`${endpoints.products}?limit=8`);
-          const pj = await pr.json();
-          setFeatured((pj.products || []).map((p: any) => ({ id: p.id, name: p.name, price: p.price, image: p.image })));
+          setFeatured([]);
         }
       } catch (e) {
       } finally {
@@ -60,7 +58,7 @@ export default function HomeScreen() {
               />
             ) : null}
             {data?.discountsNote ? <Text style={styles.note}>{data.discountsNote}</Text> : null}
-            <Text style={styles.section}>Featured</Text>
+            {featured.length > 0 ? <Text style={styles.section}>Featured</Text> : null}
           </View>
         }
         contentContainerStyle={styles.list}
