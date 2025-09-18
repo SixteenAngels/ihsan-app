@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Button, Alert } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
 import { useAuth } from '../lib/auth-context';
 
@@ -41,6 +41,22 @@ export default function ProfileScreen() {
       <Text style={styles.meta}>{profile.email}</Text>
       {profile.phone ? <Text style={styles.meta}>{profile.phone}</Text> : null}
       {profile.role ? <Text style={styles.meta}>Role: {profile.role}</Text> : null}
+      <View style={{ marginTop: 16 }}>
+        <Button title="Apply to be a Vendor" onPress={async () => {
+          try {
+            const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || ''}/api/vendor/apply`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: userId }),
+            });
+            const json = await res.json();
+            if (!json?.success) throw new Error(json?.error || 'Failed');
+            Alert.alert('Submitted', 'Your application is pending review.');
+          } catch (e: any) {
+            Alert.alert('Error', e.message || 'Could not submit');
+          }
+        }} />
+      </View>
     </View>
   );
 }
