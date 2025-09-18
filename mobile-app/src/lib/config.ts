@@ -12,6 +12,11 @@ export const endpoints = {
   notifications: `${API_BASE_URL}/api/notifications`,
   tracking: (trackingNumber: string) => `${API_BASE_URL}/api/tracking/${trackingNumber}`,
   groupBuys: `${API_BASE_URL}/api/group-buys`,
+  groupBuyJoin: (id: string) => `${API_BASE_URL}/api/group-buys/${id}/join`,
+  reviewsHelpful: (id: string) => `${API_BASE_URL}/api/reviews/${id}/helpful`,
+  homepage: `${API_BASE_URL}/api/homepage`,
+  paystackInitialize: `${API_BASE_URL}/api/paystack/initialize`,
+  paymentVerify: `${API_BASE_URL}/api/payment`,
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>) {
