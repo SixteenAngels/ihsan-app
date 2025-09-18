@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { useAuth } from '../lib/auth-context';
 
 type Notification = {
   id: string;
@@ -10,8 +11,8 @@ type Notification = {
   created_at: string;
 };
 
-export default function NotificationsScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function NotificationsScreen() {
+  const { userId } = useAuth();
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 

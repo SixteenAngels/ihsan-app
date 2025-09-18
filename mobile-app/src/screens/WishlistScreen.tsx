@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { useAuth } from '../lib/auth-context';
 
 type WishItem = {
   id: string;
@@ -10,8 +11,8 @@ type WishItem = {
   image?: string;
 };
 
-export default function WishlistScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function WishlistScreen() {
+  const { userId } = useAuth();
   const [items, setItems] = useState<WishItem[]>([]);
   const [loading, setLoading] = useState(true);
 

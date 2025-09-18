@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { useAuth } from '../lib/auth-context';
 
 type Profile = {
   id: string;
@@ -10,8 +11,8 @@ type Profile = {
   role?: string;
 };
 
-export default function ProfileScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function ProfileScreen() {
+  const { userId } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 

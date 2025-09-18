@@ -19,6 +19,8 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import GroupBuysScreen from './src/screens/GroupBuysScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
+import { AuthProvider, useAuth } from './src/lib/auth-context';
+import * as Linking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
@@ -85,19 +87,52 @@ function HomeTabs() {
   );
 }
 
+const linking = {
+  prefixes: [Linking.createURL('/'), 'mobileapp://'],
+  config: {
+    screens: {
+      Home: {
+        screens: {
+          Products: {
+            screens: {
+              ProductDetail: 'product/:id',
+              Orders: 'orders',
+              OrderDetail: 'order/:orderNumber',
+              Checkout: 'checkout',
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+function RootNavigator() {
+  const { userId, loading } = useAuth();
+  return (
+    <Stack.Navigator initialRouteName={userId ? 'Home' : 'Login'}>
+      {!userId ? (
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Signup" component={SignupScreen} options={{ headerLargeTitle: true, title: 'Create Account' }} />
+        </>
+      ) : null}
+      <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={{
-        ...DefaultTheme,
-        colors: { ...DefaultTheme.colors, primary: '#007AFF', background: '#F2F2F7' },
-      }}>
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Signup" component={SignupScreen} options={{ headerLargeTitle: true, title: 'Create Account' }} />
-          <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false }} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AuthProvider>
+        <NavigationContainer linking={linking} theme={{
+          ...DefaultTheme,
+          colors: { ...DefaultTheme.colors, primary: '#007AFF', background: '#F2F2F7' },
+        }}>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

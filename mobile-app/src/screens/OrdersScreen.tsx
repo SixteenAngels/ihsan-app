@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../lib/auth-context';
 
 type Order = {
   id: string;
@@ -11,8 +12,8 @@ type Order = {
   created_at: string;
 };
 
-export default function OrdersScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function OrdersScreen() {
+  const { userId } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<any>();

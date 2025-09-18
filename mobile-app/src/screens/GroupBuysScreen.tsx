@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
 import { Button, Alert } from 'react-native';
+import { useAuth } from '../lib/auth-context';
 
 type GroupBuy = {
   id: string;
@@ -12,8 +13,8 @@ type GroupBuy = {
   end_date: string;
 };
 
-export default function GroupBuysScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function GroupBuysScreen() {
+  const { userId } = useAuth();
   const [rows, setRows] = useState<GroupBuy[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
+import { useAuth } from '../lib/auth-context';
 
 type CartItem = {
   id: string;
@@ -12,8 +13,8 @@ type CartItem = {
   image?: string;
 };
 
-export default function CartScreen({ route }: any) {
-  const { userId } = route.params || {};
+export default function CartScreen() {
+  const { userId } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
