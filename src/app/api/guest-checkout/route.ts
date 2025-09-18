@@ -86,27 +86,19 @@ export async function POST(request: Request) {
       }, { status: 500 })
     }
 
-    // Initialize payment with Paystack
-    const paymentData = {
-      email: shippingInfo.email,
-      amount: Math.round(totals.total * 100), // Convert to kobo
-      reference: orderNumber,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/orders/success?order=${orderNumber}`,
-      metadata: {
-        order_id: order.id,
-        guest_id: guestId,
-        order_number: orderNumber
-      }
-    }
-
-    // In a real implementation, you would call Paystack API here
-    // For now, we'll simulate the payment initialization
-    const paymentResponse = {
-      success: true,
-      authorization_url: `https://checkout.paystack.com/${orderNumber}`,
-      access_code: `access_code_${orderNumber}`,
-      reference: orderNumber
-    }
+    // Initialize payment with Paystack (delegate to /api/payment)
+    const paymentInit = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: shippingInfo.email,
+        amount: totals.total,
+        reference: orderNumber,
+        orderId: order.id,
+        paymentMethod: 'all'
+      })
+    })
+    const paymentResponse = await paymentInit.json()
 
     return NextResponse.json({
       success: true,
@@ -116,7 +108,7 @@ export async function POST(request: Request) {
           orderNumber: orderNumber,
           status: 'pending',
           total: totals.total,
-          paymentUrl: paymentResponse.authorization_url
+          paymentUrl: paymentResponse?.data?.authorization_url || null
         },
         payment: paymentResponse
       }

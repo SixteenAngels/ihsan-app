@@ -7,10 +7,15 @@ import GoogleOAuthButton from '../components/GoogleOAuthButton';
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const navigation = useNavigation<any>();
 
   const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Password mismatch', 'Passwords do not match.');
+      return;
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -47,6 +52,14 @@ export default function SignupScreen() {
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
+        placeholderTextColor="#8E8E93"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
         secureTextEntry
         placeholderTextColor="#8E8E93"
       />
