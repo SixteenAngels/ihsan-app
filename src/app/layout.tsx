@@ -68,6 +68,7 @@ export const metadata: Metadata = {
     'application-name': 'Ihsan',
     'msapplication-TileColor': '#2563eb',
     'theme-color': '#2563eb',
+    'icon': '/favicon.svg',
   },
 };
 
