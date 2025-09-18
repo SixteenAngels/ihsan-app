@@ -30,7 +30,9 @@
       "bundler": "metro"
     },
     "plugins": [
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      ["sentry-expo", {"project": "your-sentry-project", "organization": "your-org"}],
+      ["expo-notifications", {"icon": "./assets/images/icon.png"}]
     ],
     "experiments": {
       "typedRoutes": true

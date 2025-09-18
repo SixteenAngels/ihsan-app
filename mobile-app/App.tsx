@@ -19,6 +19,7 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import GroupBuysScreen from './src/screens/GroupBuysScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
+import { PrivacyPolicyScreen, TermsOfServiceScreen } from './src/screens/LegalScreens';
 import { AuthProvider, useAuth } from './src/lib/auth-context';
 import * as Linking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +51,8 @@ function DashboardStackScreen() {
       <DashboardStack.Screen name="Cart" component={CartScreen} options={{ title: 'Cart' }} />
       <DashboardStack.Screen name="Orders" component={OrdersScreen} options={{ title: 'Orders' }} />
       <DashboardStack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: 'Order' }} />
+      <DashboardStack.Screen name="Privacy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <DashboardStack.Screen name="Terms" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
     </DashboardStack.Navigator>
   );
 }

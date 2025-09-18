@@ -1,10 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Button, Alert, Linking } from 'react-native';
 import { endpoints } from '../lib/config';
+import * as LinkingExpo from 'expo-linking';
 
 export default function CheckoutScreen({ route }: any) {
   const { userId, amount, email, phone, orderNumber } = route.params || {};
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    const sub = LinkingExpo.addEventListener('url', async ({ url }) => {
+      try {
+        const parsed = LinkingExpo.parse(url);
+        const reference = parsed.queryParams?.reference as string | undefined;
+        if (reference) {
+          const verify = await fetch(`${endpoints.paymentVerify}?reference=${encodeURIComponent(reference)}`);
+          const json = await verify.json();
+          if (json?.success) {
+            Alert.alert('Payment successful', `Reference: ${reference}`);
+          } else {
+            Alert.alert('Payment not verified', 'Please try again');
+          }
+        }
+      } catch {}
+    });
+    return () => sub.remove();
+  }, []);
 
   const pay = async () => {
     try {
