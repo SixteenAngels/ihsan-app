@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { Server as SocketIOServer } from 'socket.io'
 import { Server as NetServer } from 'http'
 import ChatServer from '@/lib/chat-server'
+import jwt from 'jsonwebtoken'
 
 let io: SocketIOServer | null = null
 let chatServer: ChatServer | null = null
@@ -25,6 +26,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         : 'http://localhost:3000',
       methods: ['GET', 'POST']
     }
+  })
+
+  // Basic JWT auth middleware for Socket.IO (expects token in query)
+  io.use((socket, next) => {
+    const token = (socket.handshake.auth as any)?.token || (socket.handshake.query as any)?.token
+    if (!token) return next()
+    try {
+      const decoded: any = jwt.decode(String(token))
+      ;(socket as any).userId = decoded?.sub || decoded?.user?.id
+    } catch {}
+    next()
   })
 
   // Initialize chat server

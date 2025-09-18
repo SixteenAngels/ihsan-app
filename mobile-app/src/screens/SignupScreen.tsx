@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import GoogleOAuthButton from '../components/GoogleOAuthButton';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const navigation = useNavigation<any>();
 
   const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Password mismatch', 'Passwords do not match.');
+      return;
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -20,11 +27,12 @@ export default function SignupScreen() {
       Alert.alert('Signup Error', error.message);
     } else {
       Alert.alert('Success', 'Check your email for confirmation link.');
+      navigation.goBack();
     }
   };
 
   const handleLogin = () => {
-    // Handle login navigation or logic here
+    navigation.goBack();
   };
 
   return (
@@ -44,6 +52,14 @@ export default function SignupScreen() {
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
+        placeholderTextColor="#8E8E93"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
         secureTextEntry
         placeholderTextColor="#8E8E93"
       />

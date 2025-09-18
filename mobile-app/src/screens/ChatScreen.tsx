@@ -1,41 +1,48 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, FlatList } from 'react-native';
-import { supabase } from '../lib/supabase';
+import io, { Socket } from 'socket.io-client';
+import { useAuth } from '../lib/auth-context';
+import { API_BASE_URL } from '../lib/config';
 
-type Message = {
-  id: number;
-  content: string;
-  created_at?: string;
-};
+type ChatMessage = { id: string; message: string; senderId: string; createdAt: string };
 
 export default function ChatScreen() {
+  const { userId } = useAuth();
+  const [roomId, setRoomId] = useState<string>('public-support');
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const socketRef = useRef<Socket | null>(null);
 
-  const sendMessage = async () => {
-    if (!message) return;
-    await supabase.from('messages').insert([{ content: message }]);
+  useEffect(() => {
+    if (!userId) return;
+    const token = undefined; // TODO: use Supabase session access_token if available
+    const socket = io(API_BASE_URL, { path: '/api/socketio', transports: ['websocket'], auth: { token } });
+    socketRef.current = socket;
+    socket.on('connect', () => {
+      socket.emit('authenticate', { userId, userRole: 'customer' });
+    });
+    socket.on('authenticated', () => {
+      socket.emit('join_room', { roomId });
+    });
+    socket.on('new_message', (msg: any) => {
+      setMessages(prev => [...prev, { id: msg.id, message: msg.message, senderId: msg.senderId, createdAt: msg.createdAt }]);
+    });
+    return () => { socket.disconnect(); };
+  }, [userId, roomId]);
+
+  const sendMessage = () => {
+    if (!socketRef.current || !message) return;
+    socketRef.current.emit('send_message', { roomId, message });
     setMessage('');
-    fetchMessages();
   };
-
-  const fetchMessages = async () => {
-    const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    setMessages((data as Message[]) || []);
-  };
-
-  React.useEffect(() => {
-    fetchMessages();
-  }, []);
 
   return (
     <View style={styles.container}>
       <FlatList
         data={messages}
-        keyExtractor={item => item.id?.toString()}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <Text style={styles.message}>{item.content}</Text>
+          <Text style={styles.message}>{item.message}</Text>
         )}
       />
       <TextInput

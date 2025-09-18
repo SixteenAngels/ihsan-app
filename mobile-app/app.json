@@ -3,6 +3,9 @@
     "name": "mobile-app",
     "slug": "mobile-app",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobileapp",
@@ -14,7 +17,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.mobileapp",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,13 +27,17 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.example.mobileapp",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro"
     },
     "plugins": [
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      ["sentry-expo", {"project": "your-sentry-project", "organization": "your-org"}],
+      ["expo-notifications", {"icon": "./assets/images/icon.png"}]
     ],
     "experiments": {
       "typedRoutes": true

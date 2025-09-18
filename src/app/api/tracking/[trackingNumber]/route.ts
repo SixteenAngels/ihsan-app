@@ -49,49 +49,6 @@ export async function GET(
       console.error('Error fetching tracking events:', eventsError)
     }
 
-    // Generate mock tracking events if none exist
-    const mockEvents = [
-      {
-        id: '1',
-        status: 'Order Placed',
-        location: 'Ihsan Warehouse',
-        description: 'Your order has been placed and is being prepared',
-        timestamp: order.created_at
-      },
-      {
-        id: '2',
-        status: 'Processing',
-        location: 'Ihsan Warehouse',
-        description: 'Your order is being processed and packed',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
-      },
-      {
-        id: '3',
-        status: 'Shipped',
-        location: 'Ihsan Warehouse',
-        description: 'Your order has been shipped',
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
-      }
-    ]
-
-    if (order.status === 'delivered') {
-      mockEvents.push({
-        id: '4',
-        status: 'Delivered',
-        location: 'Delivery Address',
-        description: 'Your order has been delivered successfully',
-        timestamp: new Date().toISOString()
-      })
-    } else if (order.status === 'shipped') {
-      mockEvents.push({
-        id: '4',
-        status: 'In Transit',
-        location: 'En Route',
-        description: 'Your order is on its way to you',
-        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 hours ago
-      })
-    }
-
     const trackingData = {
       order_id: order.id,
       order_number: order.order_number,
@@ -99,7 +56,7 @@ export async function GET(
       tracking_number: order.tracking_number,
       carrier: order.carrier || 'Ihsan Logistics',
       estimated_delivery: order.estimated_delivery,
-      events: events || mockEvents
+      events: events || []
     }
 
     return NextResponse.json({

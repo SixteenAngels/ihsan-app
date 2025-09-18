@@ -68,7 +68,8 @@ export async function POST(request: NextRequest) {
       message, 
       type = 'info', 
       data = null,
-      action_url = null 
+      action_url = null,
+      expo_push_token = null 
     } = body
 
     if (!user_id || !title || !message) {
@@ -91,6 +92,13 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+    // Optionally save/refresh push token
+    if (expo_push_token) {
+      await supabase
+        .from('user_devices')
+        .upsert({ user_id, expo_push_token, updated_at: new Date().toISOString() }, { onConflict: 'user_id' } as any)
+    }
+
 
     if (error) {
       console.error('Supabase notification creation error:', error)

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import GoogleOAuthButton from '../components/GoogleOAuthButton';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigation = useNavigation<any>();
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -16,6 +18,7 @@ export default function LoginScreen() {
       Alert.alert('Login Error', error.message);
     } else {
       Alert.alert('Success', 'Logged in successfully!');
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     }
   };
 
