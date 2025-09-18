@@ -8,6 +8,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import ProductsScreen from './src/screens/ProductsScreen';
+import CategoriesScreen from './src/screens/CategoriesScreen';
+import ProductDetailScreen from './src/screens/ProductDetailScreen';
 import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
@@ -20,6 +22,8 @@ function ProductsStackScreen() {
   return (
     <ProductsStack.Navigator screenOptions={{ headerLargeTitle: true, headerShadowVisible: false }}>
       <ProductsStack.Screen name="ProductsHome" component={ProductsScreen} options={{ title: 'Products' }} />
+      <ProductsStack.Screen name="Categories" component={CategoriesScreen} options={{ title: 'Categories' }} />
+      <ProductsStack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product' }} />
     </ProductsStack.Navigator>
   );
 }
