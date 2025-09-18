@@ -18,21 +18,20 @@ export default function OrdersScreen() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<any>();
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const url = buildUrl(endpoints.orders, { customerId: userId, limit: 20 });
-        const res = await fetch(url);
-        const json = await res.json();
-        setOrders(json.orders || []);
-      } catch (e) {
-        console.warn('Failed to load orders', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+  const load = React.useCallback(async () => {
+    try {
+      const url = buildUrl(endpoints.orders, { customerId: userId, limit: 20 });
+      const res = await fetch(url);
+      const json = await res.json();
+      setOrders(json.orders || []);
+    } catch (e) {
+      console.warn('Failed to load orders', e);
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
+
+  useEffect(() => { load(); }, [load]);
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007AFF" />;
 
@@ -50,6 +49,9 @@ export default function OrdersScreen() {
           </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={styles.empty}>No orders yet</Text>}
+        )}
+        refreshing={loading}
+        onRefresh={load}
       />
     </View>
   );

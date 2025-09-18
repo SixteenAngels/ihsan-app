@@ -61,6 +61,8 @@ export default function NotificationsScreen() {
           </View>
         )}
         ListEmptyComponent={<Text style={styles.empty}>No notifications</Text>}
+        refreshing={loading}
+        onRefresh={fetchNotifications}
       />
     </View>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Image, StyleSheet } from 'react-native';
 import { endpoints, buildUrl } from '../lib/config';
 
@@ -16,21 +16,20 @@ export default function ProductsScreen() {
   const [products, setProducts] = useState<UiProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const url = buildUrl(endpoints.products, { limit: 20 });
-        const res = await fetch(url);
-        const json = await res.json();
-        setProducts(json.products || []);
-      } catch (e) {
-        console.warn('Failed to load products', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
+  const load = useCallback(async () => {
+    try {
+      const url = buildUrl(endpoints.products, { limit: 20 });
+      const res = await fetch(url);
+      const json = await res.json();
+      setProducts(json.products || []);
+    } catch (e) {
+      console.warn('Failed to load products', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   if (loading) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007AFF" />;
@@ -56,6 +55,9 @@ export default function ProductsScreen() {
             </View>
           </View>
         )}
+        )}
+        refreshing={loading}
+        onRefresh={load}
       />
     </View>
   );

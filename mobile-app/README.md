@@ -27,3 +27,5 @@ npm start
 - Products tab fetches from `${EXPO_PUBLIC_API_BASE_URL}/api/products`.
 - Supabase client is configured in `src/lib/supabase.ts`.
 - iOS styling: large titles, system colors, safe areas.
+- Push Notifications: requires EAS project and native build. Token is registered on app start.
+- Sentry: set `EXPO_PUBLIC_SENTRY_DSN` to enable error reporting.

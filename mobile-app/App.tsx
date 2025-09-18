@@ -22,6 +22,8 @@ import CheckoutScreen from './src/screens/CheckoutScreen';
 import { PrivacyPolicyScreen, TermsOfServiceScreen } from './src/screens/LegalScreens';
 import { AuthProvider, useAuth } from './src/lib/auth-context';
 import * as Linking from 'expo-linking';
+import { registerForPushNotificationsAsync } from './src/lib/notifications';
+import { initSentry } from './src/sentry';
 import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
@@ -112,6 +114,9 @@ const linking = {
 
 function RootNavigator() {
   const { userId, loading } = useAuth();
+  React.useEffect(() => {
+    registerForPushNotificationsAsync();
+  }, []);
   return (
     <Stack.Navigator initialRouteName={userId ? 'Home' : 'Login'}>
       {!userId ? (
@@ -133,6 +138,7 @@ export default function App() {
           ...DefaultTheme,
           colors: { ...DefaultTheme.colors, primary: '#007AFF', background: '#F2F2F7' },
         }}>
+          {initSentry()}
           <RootNavigator />
         </NavigationContainer>
       </AuthProvider>
