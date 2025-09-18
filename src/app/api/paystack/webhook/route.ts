@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 // Paystack webhook handler for payment callbacks
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
-    const signature = request.headers.get('x-paystack-signature')
+    const signature = request.headers.get('x-paystack-signature') || ''
 
-    // Verify webhook signature (in production, you should verify the signature)
-    // const crypto = require('crypto')
-    // const hash = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(body).digest('hex')
-    // if (hash !== signature) {
-    //   return NextResponse.json({ success: false, message: 'Invalid signature' }, { status: 400 })
-    // }
+    // Verify webhook signature
+    const secret = process.env.PAYSTACK_SECRET_KEY || ''
+    const hash = crypto.createHmac('sha512', secret).update(body).digest('hex')
+    if (!secret || hash !== signature) {
+      return NextResponse.json({ success: false, message: 'Invalid signature' }, { status: 400 })
+    }
 
     const event = JSON.parse(body)
 

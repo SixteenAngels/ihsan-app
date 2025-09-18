@@ -15,7 +15,8 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!userId) return;
-    const socket = io(API_BASE_URL, { path: '/api/socketio', transports: ['websocket'] });
+    const token = undefined; // TODO: use Supabase session access_token if available
+    const socket = io(API_BASE_URL, { path: '/api/socketio', transports: ['websocket'], auth: { token } });
     socketRef.current = socket;
     socket.on('connect', () => {
       socket.emit('authenticate', { userId, userRole: 'customer' });

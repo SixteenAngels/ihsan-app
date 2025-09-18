@@ -115,7 +115,17 @@ const linking = {
 function RootNavigator() {
   const { userId, loading } = useAuth();
   React.useEffect(() => {
-    registerForPushNotificationsAsync();
+    registerForPushNotificationsAsync().then(async (token) => {
+      if (token && userId) {
+        try {
+          await fetch(`${API_BASE_URL}/api/notifications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, title: 'Registered', message: 'Device registered', expo_push_token: token }),
+          });
+        } catch {}
+      }
+    });
   }, []);
   return (
     <Stack.Navigator initialRouteName={userId ? 'Home' : 'Login'}>
