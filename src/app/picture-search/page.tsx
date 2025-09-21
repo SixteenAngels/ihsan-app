@@ -71,9 +71,22 @@ export default function PictureSearchPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <PictureSearch onResultSelect={handleResultSelect} />
+      {/* Main Content (Disabled) */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-2">Picture Search is temporarily unavailable</h2>
+          <p className="text-muted-foreground mb-6">
+            We’re improving this feature. Please use the product search or browse categories in the meantime.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button asChild>
+              <a href="/search">Search Products</a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href="/categories">Browse Categories</a>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Product Quick View Modal */}
