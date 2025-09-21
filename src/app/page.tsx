@@ -323,9 +323,11 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-slate-900">Just For You</h2>
-            <Button variant="outline">
-              View All
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button asChild variant="outline">
+              <Link href="/search">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </div>
           
