@@ -21,6 +21,8 @@ CREATE TABLE profiles (
     phone TEXT,
     avatar_url TEXT,
     role user_role DEFAULT 'customer',
+    vendor_status TEXT,
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -332,6 +334,65 @@ CREATE TRIGGER update_group_buy_participants_updated_at BEFORE UPDATE ON group_b
 CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_cart_items_updated_at BEFORE UPDATE ON cart_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Flash deals and daily sales
+CREATE TYPE sale_kind AS ENUM ('flash', 'daily');
+
+CREATE TABLE flash_deals (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    sale_type sale_kind NOT NULL DEFAULT 'flash',
+    product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    image_url TEXT,
+    category TEXT,
+    vendor TEXT,
+    original_price DECIMAL(10,2) NOT NULL,
+    sale_price DECIMAL(10,2) NOT NULL,
+    discount INTEGER GENERATED ALWAYS AS (GREATEST(0, LEAST(100, ROUND((100 * (original_price - sale_price) / NULLIF(original_price, 0))::numeric)))) STORED,
+    rating DECIMAL(2,1) DEFAULT 0,
+    reviews INTEGER DEFAULT 0,
+    sold INTEGER DEFAULT 0,
+    stock INTEGER DEFAULT 0,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    is_hot BOOLEAN DEFAULT false,
+    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for flash deals
+CREATE INDEX idx_flash_deals_type ON flash_deals (sale_type);
+CREATE INDEX idx_flash_deals_active ON flash_deals (is_active);
+CREATE INDEX idx_flash_deals_time ON flash_deals (start_time, end_time);
+
+-- RLS and policies for flash deals
+ALTER TABLE flash_deals ENABLE ROW LEVEL SECURITY;
+
+-- Public can view currently active deals
+CREATE POLICY "Public can view active deals" ON flash_deals
+  FOR SELECT USING (
+    is_active = true AND NOW() BETWEEN start_time AND end_time
+  );
+
+-- Admins and managers can view all deals
+CREATE POLICY "Admins can view all deals" ON flash_deals
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'manager'))
+  );
+
+-- Admins and managers can insert/update/delete deals
+CREATE POLICY "Admins can modify deals" ON flash_deals
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'manager'))
+  ) WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'manager'))
+  );
+
+-- Trigger for updated_at on flash_deals
+CREATE TRIGGER update_flash_deals_updated_at BEFORE UPDATE ON flash_deals FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to generate order number
 CREATE OR REPLACE FUNCTION generate_order_number()
