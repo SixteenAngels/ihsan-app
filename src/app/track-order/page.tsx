@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -135,6 +136,7 @@ const statusConfig = {
 }
 
 function OrderTrackingPageContent() {
+  const { user } = useAuth()
   const searchParams = useSearchParams()
   const [orderNumber, setOrderNumber] = useState(searchParams?.get('order') || '')
   const [order, setOrder] = useState<Order | null>(null)
@@ -189,6 +191,17 @@ function OrderTrackingPageContent() {
     const widthClasses = ['w-1/6', 'w-2/6', 'w-3/6', 'w-4/6', 'w-5/6', 'w-full']
     if (index < 0) return 'w-0'
     return widthClasses[Math.min(index, widthClasses.length - 1)]
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <h2 className="text-2xl font-bold mb-2">Please sign in to track orders</h2>
+          <p className="text-gray-600">Tracking is only available for logged-in users.</p>
+        </div>
+      </div>
+    )
   }
 
   return (

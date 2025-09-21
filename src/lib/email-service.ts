@@ -1,7 +1,18 @@
 // Email service using Resend
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resendClient: Resend | null = null
+
+function getResendClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not set')
+  }
+  if (!resendClient) {
+    resendClient = new Resend(apiKey)
+  }
+  return resendClient
+}
 
 export interface EmailTemplate {
   to: string | string[]
@@ -22,6 +33,7 @@ export class EmailService {
   // Send a simple email
   static async sendEmail(template: EmailTemplate) {
     try {
+      const resend = getResendClient()
       const { data, error } = await resend.emails.send({
         from: template.from || 'Ihsan <noreply@ihsan.com>',
         to: template.to,

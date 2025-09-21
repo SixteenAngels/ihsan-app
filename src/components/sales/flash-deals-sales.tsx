@@ -20,6 +20,7 @@ import {
   Users
 } from 'lucide-react'
 import { fadeIn, slideInFromBottom, bounceIn } from '@/lib/animations'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 interface FlashDeal {
   id: string
@@ -62,122 +63,91 @@ interface DailySale {
 export default function FlashDealsAndSales() {
   const [activeTab, setActiveTab] = useState<'flash' | 'daily'>('flash')
   const [timeLeft, setTimeLeft] = useState<{ [key: string]: string }>({})
+  const [flashDeals, setFlashDeals] = useState<FlashDeal[]>([])
+  const [dailySales, setDailySales] = useState<DailySale[]>([])
 
-  // Mock data for flash deals
-  const flashDeals: FlashDeal[] = [
-    {
-      id: '1',
-      title: 'Premium Ghana Shea Butter - 500ml',
-      description: 'Pure, unrefined shea butter from Ghana. Perfect for skin and hair care.',
-      originalPrice: 25.99,
-      salePrice: 15.99,
-      discount: 38,
-      image: '/api/placeholder/300/300',
-      category: 'Beauty & Health',
-      vendor: 'African Naturals',
-      rating: 4.8,
-      reviews: 1247,
-      sold: 89,
-      stock: 45,
-      endTime: '2024-01-15T18:00:00Z',
-      startTime: '2024-01-15T12:00:00Z',
-      isActive: true,
-      isHot: true
-    },
-    {
-      id: '2',
-      title: 'Handwoven Kente Cloth - Traditional',
-      description: 'Authentic handwoven kente cloth from Ghana. Perfect for special occasions.',
-      originalPrice: 65.00,
-      salePrice: 45.00,
-      discount: 31,
-      image: '/api/placeholder/300/300',
-      category: 'Fashion & Textiles',
-      vendor: 'Heritage Crafts',
-      rating: 4.9,
-      reviews: 156,
-      sold: 23,
-      stock: 12,
-      endTime: '2024-01-15T20:00:00Z',
-      startTime: '2024-01-15T14:00:00Z',
-      isActive: true,
-      isHot: false
-    },
-    {
-      id: '3',
-      title: 'Organic Coconut Oil - Cold Pressed',
-      description: 'Premium cold-pressed coconut oil. Great for cooking and skincare.',
-      originalPrice: 18.50,
-      salePrice: 12.50,
-      discount: 32,
-      image: '/api/placeholder/300/300',
-      category: 'Beauty & Health',
-      vendor: 'Tropical Essentials',
-      rating: 4.6,
-      reviews: 892,
-      sold: 156,
-      stock: 78,
-      endTime: '2024-01-15T22:00:00Z',
-      startTime: '2024-01-15T16:00:00Z',
-      isActive: true,
-      isHot: true
-    }
-  ]
+  useEffect(() => {
+    const loadDeals = async () => {
+      if (!isSupabaseConfigured) {
+        setFlashDeals([])
+        setDailySales([])
+        return
+      }
 
-  // Mock data for daily sales
-  const dailySales: DailySale[] = [
-    {
-      id: '4',
-      title: 'Wooden African Mask - Hand Carved',
-      description: 'Beautiful hand-carved wooden mask from West Africa.',
-      originalPrice: 35.00,
-      salePrice: 28.75,
-      discount: 18,
-      image: '/api/placeholder/300/300',
-      category: 'Home & Decor',
-      vendor: 'Artisan Gallery',
-      rating: 4.7,
-      reviews: 203,
-      sold: 45,
-      stock: 25,
-      validUntil: '2024-01-16T23:59:59Z',
-      isActive: true
-    },
-    {
-      id: '5',
-      title: 'Beaded Jewelry Set - Traditional',
-      description: 'Traditional beaded jewelry set with authentic African beads.',
-      originalPrice: 28.99,
-      salePrice: 22.99,
-      discount: 21,
-      image: '/api/placeholder/300/300',
-      category: 'Jewelry & Accessories',
-      vendor: 'Beaded Beauty',
-      rating: 4.5,
-      reviews: 445,
-      sold: 78,
-      stock: 42,
-      validUntil: '2024-01-16T23:59:59Z',
-      isActive: true
-    },
-    {
-      id: '6',
-      title: 'Organic Mango Powder',
-      description: 'Pure organic mango powder. Perfect for smoothies and desserts.',
-      originalPrice: 12.99,
-      salePrice: 8.99,
-      discount: 31,
-      image: '/api/placeholder/300/300',
-      category: 'Food & Beverages',
-      vendor: 'Tropical Essentials',
-      rating: 4.6,
-      reviews: 445,
-      sold: 123,
-      stock: 67,
-      validUntil: '2024-01-16T23:59:59Z',
-      isActive: true
+      const nowIso = new Date().toISOString()
+
+      // Fetch flash deals
+      const { data: flash, error: flashError } = await (supabase as any)
+        .from('flash_deals')
+        .select('*')
+        .eq('sale_type', 'flash')
+        .eq('is_active', true)
+        .lte('start_time', nowIso)
+        .gte('end_time', nowIso)
+        .order('end_time', { ascending: true })
+
+      if (!flashError && Array.isArray(flash)) {
+        setFlashDeals(
+          flash.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            originalPrice: Number(d.original_price),
+            salePrice: Number(d.sale_price),
+            discount: Number(d.discount) || 0,
+            image: d.image_url || '/api/placeholder/300/300',
+            category: d.category || '',
+            vendor: d.vendor || '',
+            rating: Number(d.rating) || 0,
+            reviews: Number(d.reviews) || 0,
+            sold: Number(d.sold) || 0,
+            stock: Number(d.stock) || 0,
+            startTime: d.start_time,
+            endTime: d.end_time,
+            isActive: Boolean(d.is_active),
+            isHot: Boolean(d.is_hot)
+          }))
+        )
+      } else {
+        setFlashDeals([])
+      }
+
+      // Fetch daily sales
+      const { data: daily, error: dailyError } = await (supabase as any)
+        .from('flash_deals')
+        .select('*')
+        .eq('sale_type', 'daily')
+        .eq('is_active', true)
+        .gte('end_time', nowIso)
+        .order('end_time', { ascending: true })
+
+      if (!dailyError && Array.isArray(daily)) {
+        setDailySales(
+          daily.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            originalPrice: Number(d.original_price),
+            salePrice: Number(d.sale_price),
+            discount: Number(d.discount) || 0,
+            image: d.image_url || '/api/placeholder/300/300',
+            category: d.category || '',
+            vendor: d.vendor || '',
+            rating: Number(d.rating) || 0,
+            reviews: Number(d.reviews) || 0,
+            sold: Number(d.sold) || 0,
+            stock: Number(d.stock) || 0,
+            validUntil: d.end_time,
+            isActive: Boolean(d.is_active)
+          }))
+        )
+      } else {
+        setDailySales([])
+      }
     }
-  ]
+
+    loadDeals()
+  }, [])
 
   // Calculate time remaining
   useEffect(() => {

@@ -88,6 +88,15 @@ export function DeliveryTracking() {
     }
   }
 
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 text-center">
+        <h2 className="text-2xl font-bold mb-2">Please sign in to track orders</h2>
+        <p className="text-gray-600">Tracking is only available for logged-in users.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}

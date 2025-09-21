@@ -146,6 +146,21 @@ export default function AdminDashboard() {
         </aside>
 
         <main className="flex-1 p-6">
+          {/* Quick link card to flash deals manager */}
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Flash Deals</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <p className="text-slate-600 dark:text-slate-300">Create and manage flash and daily sales</p>
+                <Button asChild>
+                  <a href="/admin/flash-deals">Open</a>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
