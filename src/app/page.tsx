@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { supabase, type HomepageBanner, isSupabaseConfigured } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -55,6 +56,7 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [banner, setBanner] = useState<HomepageBanner | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,6 +71,22 @@ export default function HomePage() {
         
         setProducts(productsData.products || [])
         setCategories(categoriesData || [])
+
+        // Load active homepage banner
+        if (isSupabaseConfigured) {
+          const nowIso = new Date().toISOString()
+          const { data } = await (supabase as any)
+            .from('homepage_banners')
+            .select('*')
+            .eq('is_active', true)
+            .lte('starts_at', nowIso)
+            .or('starts_at.is.null')
+            .gte('ends_at', nowIso)
+            .or('ends_at.is.null')
+            .order('sort_order', { ascending: true })
+            .limit(1)
+          if (Array.isArray(data) && data[0]) setBanner(data[0])
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -92,8 +110,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-50 via-white to-red-50 py-20 relative overflow-hidden">
+      {/* Hero Section (dynamic) */}
+      <section className={`py-20 relative overflow-hidden bg-gradient-to-br ${banner?.bg_gradient || 'from-slate-50 via-white to-red-50'}`}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -107,10 +125,10 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                iPhone 14
-                <span className="block text-gradient-red">
-                  Series
-                </span>
+                {banner?.title || 'Welcome to Ihsan'}
+                {banner?.subtitle && (
+                  <span className="block text-gradient-red">{banner.subtitle}</span>
+                )}
             </motion.h1>
             <motion.p 
                 className="text-xl lg:text-2xl text-slate-600 max-w-lg leading-relaxed"
@@ -118,7 +136,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                Up to 10% off Voucher
+                {banner?.subtitle ? '' : 'Shop the latest deals and new arrivals'}
             </motion.p>
             <motion.div 
                 className="flex flex-col sm:flex-row gap-4 mt-8"
@@ -126,13 +144,21 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                <Button size="lg" className="btn-primary text-lg px-8 py-4">
-                  Shop Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-                  Learn More
-                </Button>
+                {banner?.cta_href && (
+                  <Button asChild size="lg" className="btn-primary text-lg px-8 py-4">
+                    <Link href={banner.cta_href}>
+                      {banner.cta_label || 'Shop Now'}
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                )}
+                {banner?.secondary_href && (
+                  <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
+                    <Link href={banner.secondary_href}>
+                      {banner.secondary_label || 'Learn More'}
+                    </Link>
+                  </Button>
+                )}
               </motion.div>
             </motion.div>
             <motion.div
