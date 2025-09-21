@@ -194,11 +194,15 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <ArrowRight className="h-4 w-4 rotate-180" />
+              <Button asChild variant="outline" size="sm">
+                <Link href="/flash-deals">
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                </Link>
               </Button>
-              <Button variant="outline" size="sm">
-                <ArrowRight className="h-4 w-4" />
+              <Button asChild variant="outline" size="sm">
+                <Link href="/flash-deals">
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
