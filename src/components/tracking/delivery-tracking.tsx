@@ -231,8 +231,8 @@ export function DeliveryTracking() {
             <p className="text-sm text-gray-600">
               If you're having trouble tracking your order, please contact our support team.
             </p>
-            <Button variant="outline" className="mt-4">
-              Contact Support
+            <Button asChild variant="outline" className="mt-4">
+              <a href="/support">Contact Support</a>
             </Button>
           </div>
         </CardContent>

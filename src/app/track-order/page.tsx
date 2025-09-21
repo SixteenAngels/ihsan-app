@@ -392,14 +392,18 @@ function OrderTrackingPageContent() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" className="flex items-center gap-2">
+                <Button asChild variant="outline" className="flex items-center gap-2">
+                  <a href="tel:+233000000000">
                     <Phone className="w-4 h-4" />
                     Call Support
-                  </Button>
-                  <Button variant="outline" className="flex items-center gap-2">
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="flex items-center gap-2">
+                  <a href="/support/chat">
                     <MessageCircle className="w-4 h-4" />
                     Live Chat
-                  </Button>
+                  </a>
+                </Button>
                 </div>
                 <p className="text-sm text-gray-600 mt-4">
                   Having issues with your order? Our support team is available 24/7 to help you.

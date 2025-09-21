@@ -36,6 +36,22 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl!, supabaseAnonKey!)
   : mockClient as any
 
+export type HomepageBanner = {
+  id: string
+  title: string
+  subtitle?: string | null
+  cta_label?: string | null
+  cta_href?: string | null
+  secondary_label?: string | null
+  secondary_href?: string | null
+  image_url?: string | null
+  bg_gradient?: string | null
+  is_active: boolean
+  sort_order: number
+  starts_at?: string | null
+  ends_at?: string | null
+}
+
 // Database types
 export interface Database {
   public: {
