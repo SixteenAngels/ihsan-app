@@ -126,7 +126,7 @@ export default function LiveChat({
     // Import socket.io-client dynamically to avoid SSR issues
     import('socket.io-client').then((socketIOClient) => {
       const io = socketIOClient.default
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
       const socket = io(baseUrl, {
         path: '/api/socketio',
         transports: ['websocket', 'polling']

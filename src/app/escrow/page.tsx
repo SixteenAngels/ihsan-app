@@ -230,7 +230,7 @@ export default function PaystackEscrowSystem() {
           amount: transaction.amount * 100, // Convert to kobo/cents
           email: 'customer@example.com',
           reference: transaction.orderNumber,
-          callback_url: `${window.location.origin}/payment/callback`,
+          callback_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/payment/callback`,
           metadata: {
             order_id: transaction.id,
             customer_name: transaction.customerName,

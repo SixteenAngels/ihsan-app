@@ -27,23 +27,28 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
   const searchParams = useSearchParams()
   const redirect = searchParams?.get('redirect') || '/'
   const { login, signup, user, refreshUser } = useAuth()
-
+  
   // Check if Supabase is configured
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(true)
-
+  
   useEffect(() => {
     setIsSupabaseConfigured(!!supaConfigured)
   }, [])
-
+  
   const handleGoogleLogin = async () => {
     if (!isSupabaseConfigured) {
       toast.error('Google Auth is not configured. Please set up Supabase first.')
       return
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (!appUrl) {
+      toast.error('App URL not configured. Set NEXT_PUBLIC_APP_URL in Vercel.')
+      return
+    }
+
     setIsLoading(true)
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -68,7 +73,7 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
       setIsLoading(false)
     }
   }
-
+  
   const handleEmailLogin = async (email: string, password: string) => {
     setIsLoading(true)
     try {
