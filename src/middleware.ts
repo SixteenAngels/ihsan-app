@@ -33,6 +33,10 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
       }
 
+      // Get the session from the Authorization header or cookies
+      const authHeader = request.headers.get('authorization')
+      const accessToken = authHeader?.replace('Bearer ', '')
+      
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { persistSession: false },
         global: accessToken
@@ -40,10 +44,6 @@ export async function middleware(request: NextRequest) {
           : undefined,
       })
 
-      // Get the session from the Authorization header or cookies
-      const authHeader = request.headers.get('authorization')
-      const accessToken = authHeader?.replace('Bearer ', '')
-      
       if (accessToken) {
         const { data: { user }, error } = await supabase.auth.getUser(accessToken)
         
