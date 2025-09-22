@@ -75,17 +75,18 @@ export default function HomePage() {
         // Load active homepage banner
         if (isSupabaseConfigured) {
           const nowIso = new Date().toISOString()
-          const { data } = await (supabase as any)
+          const { data, error } = await (supabase as any)
             .from('homepage_banners')
             .select('*')
             .eq('is_active', true)
-            .lte('starts_at', nowIso)
-            .or('starts_at.is.null')
-            .gte('ends_at', nowIso)
-            .or('ends_at.is.null')
+            .or('starts_at.is.null,starts_at.lte.' + nowIso)
+            .or('ends_at.is.null,ends_at.gte.' + nowIso)
             .order('sort_order', { ascending: true })
             .limit(1)
-          if (Array.isArray(data) && data[0]) setBanner(data[0])
+
+          if (!error && Array.isArray(data) && data[0]) {
+            setBanner(data[0])
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -144,21 +145,27 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {banner?.cta_href && (
-                  <Button asChild size="lg" className="btn-primary text-lg px-8 py-4">
-                    <Link href={banner.cta_href}>
-                      {banner.cta_label || 'Shop Now'}
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
-                )}
-                {banner?.secondary_href && (
-                  <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
-                    <Link href={banner.secondary_href}>
-                      {banner.secondary_label || 'Learn More'}
-                    </Link>
-                  </Button>
-                )}
+                {(() => {
+                  const primaryHref = banner?.cta_href || '/search'
+                  const primaryLabel = banner?.cta_label || 'Shop Now'
+                  const secondaryHref = banner?.secondary_href || '/about'
+                  const secondaryLabel = banner?.secondary_label || 'Learn More'
+                  return (
+                    <>
+                      <Button asChild size="lg" className="btn-primary text-lg px-8 py-4">
+                        <Link href={primaryHref}>
+                          {primaryLabel}
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
+                        <Link href={secondaryHref}>
+                          {secondaryLabel}
+                        </Link>
+                      </Button>
+                    </>
+                  )
+                })()}
               </motion.div>
             </motion.div>
             <motion.div
@@ -167,9 +174,19 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="w-full h-96 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl flex items-center justify-center">
-                <div className="text-6xl">📱</div>
-              </div>
+              {banner?.image_url ? (
+                <div className="w-full h-96 rounded-2xl overflow-hidden shadow-lg">
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || 'Hero image'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-96 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl flex items-center justify-center">
+                  <div className="text-6xl">📱</div>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>

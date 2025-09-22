@@ -134,6 +134,14 @@ export default function AdminDashboard() {
                 Settings
               </Button>
               <Button
+                variant={activeTab === 'homepage' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('homepage')}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Homepage Banners
+              </Button>
+              <Button
                 variant={activeTab === 'store' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => setActiveTab('store')}
@@ -337,6 +345,24 @@ export default function AdminDashboard() {
                     <p className="text-slate-600 mb-4">List and manage products sold directly by Admin.</p>
                     <Button asChild>
                       <a href="/admin/store">Go to Admin Store</a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'homepage' && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-slate-900">Homepage Banners</h2>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <Settings className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">Manage Banners</h3>
+                    <p className="text-slate-600 mb-4">Create and manage the hero banner content.</p>
+                    <Button asChild>
+                      <a href="/admin/flash-deals">Open Banner Manager</a>
                     </Button>
                   </div>
                 </CardContent>
