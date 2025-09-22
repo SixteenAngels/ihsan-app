@@ -1,40 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Debug logging
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing');
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
-console.log('Is Supabase Configured:', isSupabaseConfigured);
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
-// Create a mock client if environment variables are missing
-const mockClient = {
-  auth: {
-    onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
-    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-    signInWithPassword: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-    signUp: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-    signOut: () => Promise.resolve({ error: null }),
-    signInWithOAuth: () => Promise.resolve({ data: { url: null }, error: { message: 'Supabase not configured' } }),
-    admin: {
-      createUser: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-      deleteUser: () => Promise.resolve({ error: { message: 'Supabase not configured' } })
-    }
-  },
-  from: () => ({
-    select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }),
-    insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }),
-    update: () => ({ eq: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }) }),
-    upsert: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
-  })
+// Strict production behavior: require env vars
+if (process.env.NODE_ENV === 'production' && !isSupabaseConfigured) {
+  throw new Error('Supabase configuration is missing in production environment')
 }
 
-export const supabase = isSupabaseConfigured 
-  ? createClient(supabaseUrl!, supabaseAnonKey!)
-  : mockClient as any
+export const supabase = createClient(supabaseUrl as string, supabaseAnonKey as string)
 
 export type HomepageBanner = {
   id: string
