@@ -34,9 +34,10 @@ export async function middleware(request: NextRequest) {
       }
 
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: false
-        }
+        auth: { persistSession: false },
+        global: accessToken
+          ? { headers: { Authorization: `Bearer ${accessToken}` } }
+          : undefined,
       })
 
       // Get the session from the Authorization header or cookies
@@ -51,13 +52,18 @@ export async function middleware(request: NextRequest) {
         }
 
         // Check user role from profile
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single()
 
-        const userRole = profile?.role || 'customer'
+        // Fallback: if profile missing, allow only login page access
+        if (profileError && path !== '/login') {
+          return NextResponse.redirect(new URL('/login', request.url))
+        }
+
+        const userRole = (profile as any)?.role || 'customer'
         
         // Check if user has access to the requested area
         if (path.startsWith('/admin') && userRole !== 'admin') {

@@ -46,6 +46,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (error) {
+        // Attempt to create profile if missing (trigger may not have run yet)
+        try {
+          await supabase.from('profiles').upsert({
+            id: supabaseUser.id,
+            email: supabaseUser.email || '',
+            full_name: (supabaseUser as any).user_metadata?.full_name || '',
+            phone: (supabaseUser as any).user_metadata?.phone || null,
+            role: 'customer',
+            is_active: true
+          })
+          const retry = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', supabaseUser.id)
+            .single()
+          if (retry.data) {
+            return {
+              id: supabaseUser.id,
+              email: supabaseUser.email || '',
+              fullName: retry.data.full_name || '',
+              role: (retry.data.role as UserRole) || 'customer',
+              avatarUrl: retry.data.avatar_url || undefined,
+              phone: retry.data.phone || undefined,
+              vendorStatus: retry.data.vendor_status || undefined,
+              isActive: retry.data.is_active ?? true
+            }
+          }
+        } catch (e) {
+          console.error('Profile upsert failed:', e)
+        }
         console.error('Error fetching user profile:', error)
         return null
       }
