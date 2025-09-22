@@ -152,17 +152,17 @@ export default function HomePage() {
                   const secondaryLabel = banner?.secondary_label || 'Learn More'
                   return (
                     <>
-                      <Button asChild size="lg" className="btn-primary text-lg px-8 py-4">
-                        <Link href={primaryHref}>
+                      <Link href={primaryHref}>
+                        <Button size="lg" className="btn-primary text-lg px-8 py-4">
                           {primaryLabel}
                           <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
-                        <Link href={secondaryHref}>
+                        </Button>
+                      </Link>
+                      <Link href={secondaryHref}>
+                        <Button variant="outline" size="lg" className="text-lg px-8 py-4">
                           {secondaryLabel}
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                     </>
                   )
                 })()}
