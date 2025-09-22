@@ -9,6 +9,8 @@
 - Improved outline button colors for better contrast on white backgrounds
 - Mapped common CTA buttons to routes (Search, Categories, Flash Deals, Support)
 - Picture Search is temporarily disabled (page shows a friendly notice)
+- Added FAQ `/faq` and Contact `/contact` pages
+- Favicon added at `/favicon.svg`
 
 ## ✨ Key Features
 
@@ -129,6 +131,7 @@ Open: http://localhost:3000
 - Picture Search: Currently disabled; page displays a notice with links to Search/Categories. Re‑enable later by restoring the component render in `src/app/picture-search/page.tsx`.
 - Google OAuth: Configure in Supabase (Providers) and Google Cloud. Ensure redirect `https://your-domain.com/auth/callback` and Supabase callback URL.
 - Payments (Paystack): Use live keys in production; rotate secrets periodically.
+- Favicon: Provided at `/favicon.svg`, referenced from the App Router metadata.
 
 ## 📁 Project Structure
 ```
