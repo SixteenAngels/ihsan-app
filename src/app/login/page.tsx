@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import EnhancedAuthForms from '@/components/auth/enhanced-auth-forms'
 
+export const dynamic = 'force-dynamic'
+
 function LoginContent() {
   const router = useRouter()
 
