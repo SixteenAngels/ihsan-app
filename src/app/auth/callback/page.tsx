@@ -14,6 +14,13 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         // Handle the OAuth callback
+        // Clean up URL hash if provider returned tokens in fragment
+        if (typeof window !== 'undefined' && window.location.hash) {
+          const url = new URL(window.location.href)
+          url.hash = ''
+          window.history.replaceState({}, document.title, url.toString())
+        }
+
         const { data, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -28,7 +35,17 @@ export default function AuthCallback() {
         if (data.session) {
           // Set role cookies based on metadata if present (fallback to customer)
           const user = data.session.user
-          const role = (user.user_metadata && (user.user_metadata.role as string)) || 'customer'
+          let role = (user.user_metadata && (user.user_metadata.role as string)) || 'customer'
+
+          // If profile exists, prefer its role
+          try {
+            const { data: profile } = await (supabase as any)
+              .from('profiles')
+              .select('role')
+              .eq('id', user.id)
+              .single()
+            if (profile?.role) role = profile.role
+          } catch {}
 
           // Clear existing auth cookies
           document.cookie = 'adminAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
@@ -40,8 +57,12 @@ export default function AuthCallback() {
           if (role === 'manager' || role === 'vendor_manager') document.cookie = 'managerAuth=true; path=/; max-age=86400'
           if (role === 'vendor') document.cookie = 'vendorAuth=true; path=/; max-age=86400'
 
-          // Redirect by role
-          if (role === 'admin') {
+          // Redirect by role; honor redirect param if present
+          const params = new URLSearchParams(window.location.search)
+          const redirect = params.get('redirect')
+          if (redirect) {
+            router.push(redirect)
+          } else if (role === 'admin') {
             router.push('/admin')
           } else if (role === 'manager' || role === 'vendor_manager') {
             router.push('/manager')

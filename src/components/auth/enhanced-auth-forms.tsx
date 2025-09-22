@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +24,9 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState(initialTab ?? 'login')
   const router = useRouter()
-  const { login, signup, user } = useAuth()
+  const searchParams = useSearchParams()
+  const redirect = searchParams?.get('redirect') || '/'
+  const { login, signup, user, refreshUser } = useAuth()
 
   // Check if Supabase is configured
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(true)
@@ -70,18 +72,25 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
     setIsLoading(true)
     try {
       await login(email, password)
+      await refreshUser()
       toast.success('Login successful!')
-      
-      // Redirect based on user role
-      if (user?.role === 'admin') {
-        router.replace('/admin')
-      } else if (user?.role === 'vendor_manager') {
-        router.replace('/manager')
-      } else if (user?.role === 'vendor') {
-        router.replace('/vendor')
-      } else {
-        onSuccess?.() ?? router.replace('/')
+
+      // Determine role fresh from session/profile
+      const { data: { user: supaUser } } = await (supabase as any).auth.getUser()
+      let role: string = 'customer'
+      if (supaUser) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('role')
+          .eq('id', supaUser.id)
+          .single()
+        role = (profile?.role as string) || 'customer'
       }
+
+      if (role === 'admin') router.replace('/admin')
+      else if (['manager', 'vendor_manager'].includes(role)) router.replace('/manager')
+      else if (role === 'vendor') router.replace('/vendor')
+      else router.replace(redirect || '/')
     } catch (error: any) {
       console.error('Login error:', error)
       toast.error(error.message || 'Login failed. Please check your credentials.')
@@ -95,7 +104,7 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
     try {
       await signup(email, password, fullName, phone)
       toast.success('Account created successfully!')
-      onSuccess?.() ?? router.replace('/')
+      router.replace(redirect || '/')
     } catch (error: any) {
       console.error('Signup error:', error)
       toast.error(error.message || 'Signup failed. Please try again.')
