@@ -26,14 +26,13 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://ihsan.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_GH',
-    url: 'https://ihsan.com',
+    url: '/',
     title: 'Ihsan - Modern E-commerce for Ghana & Africa',
     description: 'Modern, mobile-first e-commerce platform for Ghana and Africa. Shop with Air/Sea shipping options, Ready Now local stock, and Group Buy discounts.',
     siteName: 'Ihsan',
