@@ -60,6 +60,14 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Ihsan',
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/icons/icon-192x192.png',
+  },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
@@ -68,7 +76,6 @@ export const metadata: Metadata = {
     'application-name': 'Ihsan',
     'msapplication-TileColor': '#2563eb',
     'theme-color': '#2563eb',
-    'icon': '/favicon.svg',
   },
 };
 
