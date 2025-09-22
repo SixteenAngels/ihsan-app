@@ -86,8 +86,14 @@ export async function POST(request: Request) {
       }, { status: 500 })
     }
 
+    // Determine request origin
+    const headers = (request as any).headers as Headers
+    const proto = headers.get('x-forwarded-proto') || 'https'
+    const host = headers.get('x-forwarded-host') || headers.get('host')
+    const origin = `${proto}://${host}`
+
     // Initialize payment with Paystack (delegate to /api/payment)
-    const paymentInit = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment`, {
+    const paymentInit = await fetch(`${origin}/api/payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

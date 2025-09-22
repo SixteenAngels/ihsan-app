@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Determine request origin (works on Vercel/Proxies)
+    const proto = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+    const origin = `${proto}://${host}`
+
     // Convert amount to kobo (Paystack expects amount in smallest currency unit)
     const amountInKobo = Math.round(amount * 100)
 
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
       amount: amountInKobo,
       currency,
       reference,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/callback`,
+      callback_url: `${origin}/api/payment/callback`,
       metadata: {
         order_id: orderId,
         customer_phone: phone,

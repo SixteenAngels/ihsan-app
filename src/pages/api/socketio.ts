@@ -21,9 +21,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   io = new SocketIOServer(httpServer, {
     path: '/api/socketio',
     cors: {
-      origin: process.env.NODE_ENV === 'production' 
-        ? process.env.NEXT_PUBLIC_APP_URL 
-        : 'http://localhost:3000',
+      origin: (origin, callback) => {
+        // Allow same-origin in production; allow localhost in development
+        if (!origin) return callback(null, true)
+        try {
+          const url = new URL(origin)
+          if (process.env.NODE_ENV !== 'production') {
+            if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return callback(null, true)
+          }
+          // In production, only allow the deployment host
+          const allowed = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).host : null
+          if (allowed && url.host === allowed) return callback(null, true)
+        } catch {}
+        callback(new Error('Not allowed by CORS'))
+      },
       methods: ['GET', 'POST']
     }
   })
