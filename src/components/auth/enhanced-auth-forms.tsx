@@ -52,7 +52,8 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: new URL('/auth/callback', appUrl).toString(),
+          // Redirect back to site root so we don't depend on a callback route
+          redirectTo: new URL('/', appUrl).toString(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
