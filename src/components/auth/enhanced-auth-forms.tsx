@@ -41,9 +41,9 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
       return
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
     if (!appUrl) {
-      toast.error('App URL not configured. Set NEXT_PUBLIC_APP_URL in Vercel.')
+      toast.error('App URL not configured. Set NEXT_PUBLIC_APP_URL or use a valid origin.')
       return
     }
 
@@ -52,7 +52,7 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${appUrl}/auth/callback`,
+          redirectTo: new URL('/auth/callback', appUrl).toString(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
