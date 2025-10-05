@@ -57,20 +57,8 @@ export default function AuthCallback() {
           if (role === 'manager' || role === 'vendor_manager') document.cookie = 'managerAuth=true; path=/; max-age=86400'
           if (role === 'vendor') document.cookie = 'vendorAuth=true; path=/; max-age=86400'
 
-          // Redirect by role; honor redirect param if present
-          const params = new URLSearchParams(window.location.search)
-          const redirect = params.get('redirect')
-          if (redirect) {
-            router.push(redirect)
-          } else if (role === 'admin') {
-            router.push('/admin')
-          } else if (role === 'manager' || role === 'vendor_manager') {
-            router.push('/manager')
-          } else if (role === 'vendor') {
-            router.push('/vendor')
-          } else {
-            router.push('/')
-          }
+          // Always redirect to homepage after successful OAuth login
+          router.replace('/')
         } else {
           // No session - redirect to login
           router.push('/login')

@@ -93,10 +93,8 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
         role = (profile?.role as string) || 'customer'
       }
 
-      if (role === 'admin') router.replace('/admin')
-      else if (['manager', 'vendor_manager'].includes(role)) router.replace('/manager')
-      else if (role === 'vendor') router.replace('/vendor')
-      else router.replace(redirect || '/')
+      // Always redirect to homepage after successful login
+      router.replace('/')
     } catch (error: any) {
       console.error('Login error:', error)
       toast.error(error.message || 'Login failed. Please check your credentials.')
