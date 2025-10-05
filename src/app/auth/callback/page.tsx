@@ -16,8 +16,27 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         // Handle the OAuth callback
-        // Clean up URL hash if provider returned tokens in fragment
+        // If provider returned tokens in the URL hash, set the session first
         if (typeof window !== 'undefined' && window.location.hash) {
+          const rawHash = window.location.hash.startsWith('#')
+            ? window.location.hash.slice(1)
+            : window.location.hash
+          const hashParams = new URLSearchParams(rawHash)
+          const accessToken = hashParams.get('access_token')
+          const refreshToken = hashParams.get('refresh_token')
+
+          if (accessToken && refreshToken) {
+            try {
+              await (supabase as any).auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              })
+            } catch (e) {
+              console.error('Failed to set session from hash tokens:', e)
+            }
+          }
+
+          // Clean up URL hash after processing
           const url = new URL(window.location.href)
           url.hash = ''
           window.history.replaceState({}, document.title, url.toString())
