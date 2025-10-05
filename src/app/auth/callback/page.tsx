@@ -42,6 +42,24 @@ export default function AuthCallback() {
           window.history.replaceState({}, document.title, url.toString())
         }
 
+        // Handle PKCE code exchange if present
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search)
+          const code = params.get('code')
+          if (code) {
+            try {
+              await (supabase as any).auth.exchangeCodeForSession({ code })
+              // Clean the code from URL after exchange
+              const url = new URL(window.location.href)
+              url.searchParams.delete('code')
+              url.searchParams.delete('state')
+              window.history.replaceState({}, document.title, url.toString())
+            } catch (e) {
+              console.error('Code exchange failed:', e)
+            }
+          }
+        }
+
         const { data, error } = await supabase.auth.getSession()
         
         if (error) {
