@@ -102,5 +102,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/manager/:path*', '/vendor/:path*', '/auth/:path*']
+  // Exclude '/auth/:path*' so OAuth callback bypasses middleware (prevents 404/edge runtime issues)
+  matcher: ['/admin/:path*', '/manager/:path*', '/vendor/:path*']
 }
