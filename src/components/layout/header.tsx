@@ -10,6 +10,16 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart-context'
 import { useWishlist } from '@/lib/wishlist-context'
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown'
+import { useAuth } from '@/lib/auth-context'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { 
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from '@/components/ui/dropdown-menu'
 
 type CategoryNavItem = { id: string; name: string; href: string; children: { name: string; href: string }[] }
 
@@ -23,7 +33,7 @@ export function Header() {
   const [navCategories, setNavCategories] = useState<CategoryNavItem[]>([])
   const { totalItems: cartCount } = useCart()
   const { totalItems: wishlistCount } = useWishlist()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { user, logout } = useAuth()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -70,9 +80,13 @@ export function Header() {
     load()
   }, [])
 
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('user'));
-  }, []);
+  const computedDashboardHref = user
+    ? (user.role === 'admin'
+        ? '/admin'
+        : (['manager', 'vendor_manager'].includes(user.role)
+            ? '/manager'
+            : (user.role === 'vendor' ? '/vendor' : null)))
+    : null
 
   return (
     <>
@@ -165,9 +179,11 @@ export function Header() {
               <Link href="/about" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
                 About
               </Link>
-              <Link href="/signup" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
-                Sign up
-              </Link>
+              {!user && (
+                <Link href="/signup" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+                  Sign up
+                </Link>
+              )}
             </nav>
 
           {/* Search Bar - Desktop */}
@@ -209,23 +225,40 @@ export function Header() {
               </Link>
 
             {/* User Menu */}
-        {/* Account / Auth */}
-        <button
-          className="text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-slate-50"
-          aria-label="My account"
-          onClick={() => {
-            // Replace with your actual auth check
-            const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('user');
-            if (isLoggedIn) {
-              router.push('/my-account');
-            } else {
-              router.push('/login');
-            }
-          }}
-        >
-          <User className="h-5 w-5" aria-hidden="true" />
-        </button>
-        {/* Removed sign up and log in links from nav bar */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 focus:outline-none">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatarUrl || ''} />
+                      <AvatarFallback>{(user.fullName || user.email || 'U').slice(0,1).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="h-4 w-4 text-slate-500" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span className="font-semibold truncate">{user.fullName || user.email}</span>
+                      <span className="text-xs text-slate-500 capitalize">{user.role}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/my-account')}>My Account</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>Profile</DropdownMenuItem>
+                  {computedDashboardHref && (
+                    <DropdownMenuItem onClick={() => router.push(computedDashboardHref)}>Dashboard</DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => { await logout(); router.push('/'); }}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-slate-900">Login</Link>
+                <Link href="/signup" className="text-sm font-medium text-slate-700 hover:text-slate-900">Sign up</Link>
+              </div>
+            )}
 
             {/* Mobile Menu */}
             <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu" onClick={() => setIsMobileOpen(true)}>
