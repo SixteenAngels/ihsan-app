@@ -1,6 +1,6 @@
 'use client'
 
-import { notFound } from 'next/navigation'
+import { notFound, useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -84,15 +84,11 @@ const relatedProducts = [
   }
 ]
 
-interface ProductPageProps {
-  params: {
-    slug: string
-  }
-}
-
-export default function ProductPage({ params }: ProductPageProps) {
+export default function ProductPage() {
+  const params = useParams() as { slug?: string }
+  const slug = params?.slug || ''
   // In real app, fetch product by slug
-  if (params.slug !== mockProduct.slug) {
+  if (slug !== mockProduct.slug) {
     notFound()
   }
 

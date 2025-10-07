@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -53,10 +54,55 @@ interface Category {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [banner, setBanner] = useState<HomepageBanner | null>(null)
+
+  // Handle Supabase OAuth returning to site root with hash or PKCE code
+  useEffect(() => {
+    const handleOAuthReturn = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          // Hash tokens flow
+          if (window.location.hash) {
+            const rawHash = window.location.hash.slice(1)
+            const hashParams = new URLSearchParams(rawHash)
+            const accessToken = hashParams.get('access_token')
+            const refreshToken = hashParams.get('refresh_token')
+            if (accessToken && refreshToken) {
+              try {
+                await (supabase as any).auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                })
+              } catch {}
+              const url = new URL(window.location.href)
+              url.hash = ''
+              window.history.replaceState({}, document.title, url.toString())
+            }
+          }
+
+          // PKCE code exchange flow
+          const params = new URLSearchParams(window.location.search)
+          const code = params.get('code')
+          if (code) {
+            try {
+              await (supabase as any).auth.exchangeCodeForSession({ code })
+            } catch {}
+            const url = new URL(window.location.href)
+            url.searchParams.delete('code')
+            url.searchParams.delete('state')
+            window.history.replaceState({}, document.title, url.toString())
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    handleOAuthReturn()
+  }, [router])
 
   useEffect(() => {
     const fetchData = async () => {

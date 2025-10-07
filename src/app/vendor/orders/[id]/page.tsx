@@ -1,23 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export default function VendorOrderReceiptPage({ params }: { params: { id: string } }) {
+export default function VendorOrderReceiptPage() {
+  const params = useParams() as { id?: string }
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch(`/api/orders?id=${params.id}`)
+      const res = await fetch(`/api/orders?id=${params?.id}`)
       const data = await res.json()
       setOrder(data)
       setLoading(false)
     }
     load()
-  }, [params.id])
+  }, [params?.id])
 
   const print = () => {
     window.print()
