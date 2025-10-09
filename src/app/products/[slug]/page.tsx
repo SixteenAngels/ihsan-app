@@ -100,7 +100,7 @@ export default function ProductPage() {
               />
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(0, 4).map((image, index) => (
+              {((Array.isArray(product.images) ? product.images : []) as string[]).slice(0, 4).map((image: string, index: number) => (
                 <div key={index} className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer">
                   <Image
                     src={image}
