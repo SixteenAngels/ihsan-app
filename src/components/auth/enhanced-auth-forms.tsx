@@ -22,6 +22,7 @@ interface AuthFormsProps {
 export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [activeTab, setActiveTab] = useState(initialTab ?? 'login')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -123,12 +124,17 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
     const fullName = formData.get('fullName') as string
     const phone = formData.get('phone') as string
 
     if (activeTab === 'login') {
       await handleEmailLogin(email, password)
     } else {
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match')
+        return
+      }
       await handleEmailSignup(email, password, fullName, phone)
     }
   }
@@ -314,6 +320,39 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-confirm-password"
+                          name="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="Re-enter your password"
+                          className="pl-10 pr-10"
+                          required
+                          minLength={6}
+                          autoComplete="new-password"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck="false"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
                             <Eye className="h-4 w-4" />
