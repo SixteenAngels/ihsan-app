@@ -29,7 +29,7 @@ export default function ProductPage() {
         }
         const { data, error } = await (supabase as any)
           .from('products')
-          .select('id,name,slug,description,short_description,price,compare_price,images,brand,stock_quantity,is_ready_now,is_group_buy,categories(name,slug)')
+          .select('id,name,slug,description,short_description,price,compare_price,images,tags,brand,stock_quantity,is_ready_now,categories(name,slug)')
           .eq('slug', slug)
           .maybeSingle()
         if (error) {
@@ -254,7 +254,7 @@ export default function ProductPage() {
             <CardContent>
               <p className="text-muted-foreground">{product.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {product.tags.map((tag) => (
+                {((Array.isArray(product.tags) ? product.tags : []) as string[]).map((tag: string) => (
                   <Badge key={tag} variant="outline" className="text-xs">
                     {tag}
                   </Badge>
