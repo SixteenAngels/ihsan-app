@@ -46,16 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (error) {
-        // Attempt to create profile if missing (trigger may not have run yet)
+        // Attempt to create minimal profile if missing (avoid non-existent columns)
         try {
           await supabase.from('profiles').upsert({
             id: supabaseUser.id,
             email: supabaseUser.email || '',
             full_name: (supabaseUser as any).user_metadata?.full_name || '',
             phone: (supabaseUser as any).user_metadata?.phone || null,
-            role: 'customer',
-            is_active: true
-          })
+            role: 'customer'
+          } as any)
           const retry = await supabase
             .from('profiles')
             .select('*')
@@ -69,15 +68,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: (retry.data.role as UserRole) || 'customer',
               avatarUrl: retry.data.avatar_url || undefined,
               phone: retry.data.phone || undefined,
-              vendorStatus: retry.data.vendor_status || undefined,
-              isActive: retry.data.is_active ?? true
+              vendorStatus: (retry.data as any).vendor_status || undefined,
+              isActive: (retry.data as any).is_active ?? true
             }
           }
         } catch (e) {
           console.error('Profile upsert failed:', e)
         }
         console.error('Error fetching user profile:', error)
-        return null
+        // Fallback to minimal user from auth if profile cannot be read/created
+        return {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          fullName: (supabaseUser as any).user_metadata?.full_name || '',
+          role: ((supabaseUser as any).user_metadata?.role as UserRole) || 'customer',
+          avatarUrl: (supabaseUser as any).user_metadata?.avatar_url || undefined,
+          phone: (supabaseUser as any).user_metadata?.phone || undefined,
+          vendorStatus: undefined,
+          isActive: true
+        }
       }
 
       return {
@@ -209,8 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email,
             full_name: fullName || '',
             phone: phone || '',
-            role: role,
-            is_active: true
+            role: role
           })
 
         if (profileError) {
