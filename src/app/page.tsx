@@ -96,6 +96,30 @@ export default function HomePage() {
             url.searchParams.delete('state')
             window.history.replaceState({}, document.title, url.toString())
           }
+
+          // Set role cookies for middleware/UI after auth return
+          try {
+            const { data: { user } } = await (supabase as any).auth.getUser()
+            if (user) {
+              let role = ((user as any).user_metadata?.role as string) || 'customer'
+              try {
+                const { data: profile } = await (supabase as any)
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', user.id)
+                  .maybeSingle()
+                if (profile?.role) role = profile.role
+              } catch {}
+              // clear old
+              document.cookie = 'adminAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+              document.cookie = 'managerAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+              document.cookie = 'vendorAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+              // set by role
+              if (role === 'admin') document.cookie = 'adminAuth=true; path=/; max-age=86400'
+              if (['manager', 'vendor_manager'].includes(role)) document.cookie = 'managerAuth=true; path=/; max-age=86400'
+              if (role === 'vendor') document.cookie = 'vendorAuth=true; path=/; max-age=86400'
+            }
+          } catch {}
         }
       } catch {
         // ignore
