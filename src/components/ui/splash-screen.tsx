@@ -15,7 +15,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     const timer = setTimeout(() => {
       setIsVisible(false)
       setTimeout(onComplete, 500) // Wait for exit animation
-    }, 5000) // Show for 5 seconds
+    }, 1500) // Shorter splash
 
     return () => clearTimeout(timer)
   }, [onComplete])
@@ -27,7 +27,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background"
         >
           {/* Shopping cart logo with animation */}
           <div className="relative">
@@ -50,21 +50,17 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               className="relative"
             >
               <motion.div
-                className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg"
+                className="w-20 h-20 md:w-28 md:h-28 bg-primary rounded-xl flex items-center justify-center shadow-lg"
                 animate={{
-                  boxShadow: [
-                    "0 4px 20px rgba(59, 130, 246, 0.3)",
-                    "0 8px 30px rgba(59, 130, 246, 0.4)",
-                    "0 4px 20px rgba(59, 130, 246, 0.3)"
-                  ]
+                  boxShadow: ["0 8px 24px rgba(0,0,0,0.12)", "0 12px 28px rgba(0,0,0,0.18)", "0 8px 24px rgba(0,0,0,0.12)"]
                 }}
                 transition={{
-                  duration: 2,
+                  duration: 1.6,
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
               >
-                <ShoppingCart className="h-12 w-12 md:h-16 md:w-16 text-white" />
+                <ShoppingCart className="h-10 w-10 md:h-14 md:w-14 text-primary-foreground" />
               </motion.div>
               
               {/* Bounce effect */}
@@ -83,71 +79,29 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               />
             </motion.div>
 
-            {/* IHSAN text */}
+            {/* Brand text */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1, duration: 0.6 }}
-              className="mt-6 text-center"
+              transition={{ delay: 0.6, duration: 0.4 }}
+              className="mt-4 text-center"
             >
-              <h1 className="text-3xl md:text-4xl font-bold text-blue-600">
-                IHSAN
-              </h1>
-              <p className="text-sm md:text-base text-blue-500 mt-2">
-                Your Gateway to Premium Shopping
-              </p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Ihsan</h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">Loading your experience…</p>
             </motion.div>
 
-            {/* Loading indicator */}
+            {/* Loading bar */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "100%", opacity: 1 }}
+              transition={{ duration: 1.2, delay: 0.2 }}
+              className="mt-6 h-1 w-40 bg-muted rounded overflow-hidden"
             >
-              <div className="flex space-x-1">
-                {[0, 1, 2].map((index) => (
-                  <motion.div
-                    key={index}
-                    className="w-2 h-2 bg-blue-500 rounded-full"
-                    animate={{
-                      scale: [1, 1.5, 1],
-                      opacity: [0.5, 1, 0.5]
-                    }}
-                    transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      delay: index * 0.2
-                    }}
-                  />
-                ))}
-              </div>
+              <motion.div className="h-full bg-primary" initial={{ x: -80 }} animate={{ x: 0 }} transition={{ duration: 1.2, ease: 'easeOut' }} />
             </motion.div>
           </div>
 
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/30" />
-            {[...Array(15)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-blue-200/20 rounded-full"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  opacity: [0, 0.5, 0],
-                  scale: [1, 1.5, 1]
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: i * 0.2
-                }}
-              />
-            ))}
-          </div>
+          {/* Clean background */}
         </motion.div>
       )}
     </AnimatePresence>
