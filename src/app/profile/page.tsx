@@ -189,12 +189,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
+          <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -202,25 +202,25 @@ export default function ProfilePage() {
           <div className="lg:col-span-1">
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                  <User className="w-12 h-12 text-gray-400" />
+                <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <User className="w-12 h-12 text-muted-foreground" />
                 </div>
-                <CardTitle className="text-xl">{profile.fullName}</CardTitle>
+                <CardTitle className="text-xl text-foreground">{profile.fullName}</CardTitle>
                 <Badge className="w-fit mx-auto capitalize">{profile.role}</Badge>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">Member since</p>
-                  <p className="font-medium">{formatDate(profile.memberSince)}</p>
+                  <p className="text-sm text-muted-foreground">Member since</p>
+                  <p className="font-medium text-foreground">{formatDate(profile.memberSince)}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold text-primary">{profile.totalOrders}</p>
-                    <p className="text-sm text-gray-600">Orders</p>
+                    <p className="text-sm text-muted-foreground">Orders</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-primary">GH₵{profile.totalSpent.toFixed(0)}</p>
-                    <p className="text-sm text-gray-600">Total Spent</p>
+                    <p className="text-sm text-muted-foreground">Total Spent</p>
                   </div>
                 </div>
                 <div className="pt-4 border-t">
@@ -360,7 +360,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="pt-6 border-t">
-                      <h4 className="font-medium text-gray-900 mb-4">Account Security</h4>
+                      <h4 className="font-medium text-foreground mb-4">Account Security</h4>
                       <div className="space-y-3">
                         <Button variant="outline" className="w-full justify-start">
                           <Shield className="w-4 h-4 mr-2" />
@@ -397,7 +397,7 @@ export default function ProfilePage() {
                         <div key={address.id} className="border rounded-lg p-4">
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <h4 className="font-medium text-gray-900">{address.name}</h4>
+                              <h4 className="font-medium text-foreground">{address.name}</h4>
                               <Badge variant="outline" className="capitalize">{address.type}</Badge>
                               {address.isDefault && (
                                 <Badge className="ml-2">Default</Badge>
@@ -412,7 +412,7 @@ export default function ProfilePage() {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             {address.address}<br />
                             {address.city}, {address.region}<br />
                             {address.phone}
@@ -445,12 +445,12 @@ export default function ProfilePage() {
                         <div key={method.id} className="border rounded-lg p-4">
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center">
-                                <CreditCard className="w-4 h-4 text-gray-600" />
+                              <div className="w-10 h-6 bg-muted rounded flex items-center justify-center">
+                                <CreditCard className="w-4 h-4 text-muted-foreground" />
                               </div>
                               <div>
-                                <h4 className="font-medium text-gray-900">{method.name}</h4>
-                                <p className="text-sm text-gray-600">**** **** **** {method.lastFour}</p>
+                                <h4 className="font-medium text-foreground">{method.name}</h4>
+                                <p className="text-sm text-muted-foreground">**** **** **** {method.lastFour}</p>
                               </div>
                               {method.isDefault && (
                                 <Badge>Default</Badge>
@@ -483,11 +483,11 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-4">Email Notifications</h4>
+                      <h4 className="font-medium text-foreground mb-4">Email Notifications</h4>
                       <div className="space-y-3">
                         {Object.entries(profile.notifications.email).map(([key, value]) => (
                           <div key={key} className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600 capitalize">
+                            <span className="text-sm text-muted-foreground capitalize">
                               {key.replace('_', ' ')}
                             </span>
                             <Button
@@ -503,11 +503,11 @@ export default function ProfilePage() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-4">SMS Notifications</h4>
+                      <h4 className="font-medium text-foreground mb-4">SMS Notifications</h4>
                       <div className="space-y-3">
                         {Object.entries(profile.notifications.sms).map(([key, value]) => (
                           <div key={key} className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600 capitalize">
+                            <span className="text-sm text-muted-foreground capitalize">
                               {key.replace('_', ' ')}
                             </span>
                             <Button
@@ -523,11 +523,11 @@ export default function ProfilePage() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-4">Push Notifications</h4>
+                      <h4 className="font-medium text-foreground mb-4">Push Notifications</h4>
                       <div className="space-y-3">
                         {Object.entries(profile.notifications.push).map(([key, value]) => (
                           <div key={key} className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600 capitalize">
+                            <span className="text-sm text-muted-foreground capitalize">
                               {key.replace('_', ' ')}
                             </span>
                             <Button
