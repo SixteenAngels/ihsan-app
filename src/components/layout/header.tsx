@@ -72,7 +72,7 @@ export function Header() {
         : (['manager', 'vendor_manager'].includes(user.role)
             ? '/manager'
             : (user.role === 'vendor' ? '/vendor' : null)))
-    : null
+    : (roleDashboardHref || null)
 
   return (
     <>

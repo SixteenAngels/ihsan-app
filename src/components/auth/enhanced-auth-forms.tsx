@@ -95,6 +95,16 @@ export default function AuthForms({ onSuccess, initialTab }: AuthFormsProps) {
         role = (profile?.role as string) || 'customer'
       }
 
+      // Set role cookies for middleware compatibility
+      try {
+        document.cookie = 'adminAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        document.cookie = 'managerAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        document.cookie = 'vendorAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        if (role === 'admin') document.cookie = 'adminAuth=true; path=/; max-age=86400'
+        if (['manager', 'vendor_manager'].includes(role)) document.cookie = 'managerAuth=true; path=/; max-age=86400'
+        if (role === 'vendor') document.cookie = 'vendorAuth=true; path=/; max-age=86400'
+      } catch {}
+
       // Always redirect to homepage after successful login
       router.replace('/')
     } catch (error: any) {
