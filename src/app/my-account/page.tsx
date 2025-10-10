@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,14 +8,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, User, Package, Heart, CreditCard, Settings, LogOut } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export default function MyAccountPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [formData, setFormData] = useState({
-    firstName: 'Md',
-    lastName: 'Ihsan',
-    email: 'ihsan@gmail.com',
-    address: 'Kingston, 5236, united state'
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: ''
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -23,6 +24,35 @@ export default function MyAccountPage() {
     confirmPassword: ''
   })
   const [saveInfo, setSaveInfo] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: { user } } = await (supabase as any).auth.getUser()
+        if (!user) return
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (profile) {
+          const fullName = profile.full_name || ''
+          const [firstName, ...rest] = fullName.split(' ')
+          const lastName = rest.join(' ')
+          setFormData(prev => ({
+            ...prev,
+            firstName,
+            lastName,
+            email: profile.email || ''
+          }))
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
