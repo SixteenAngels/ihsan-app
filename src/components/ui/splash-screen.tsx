@@ -1,109 +1,107 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
+import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingCart } from 'lucide-react'
+import { Building2, Star } from 'lucide-react'
 
 interface SplashScreenProps {
   onComplete: () => void
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [isVisible, setIsVisible] = useState(true)
+  const [visible, setVisible] = React.useState(true)
 
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(() => {
-      setIsVisible(false)
-      setTimeout(onComplete, 500) // Wait for exit animation
-    }, 1500) // Shorter splash
-
+      setVisible(false)
+      onComplete()
+    }, 3000)
     return () => clearTimeout(timer)
   }, [onComplete])
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {visible && (
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-50 min-h-screen bg-gradient-to-br from-primary via-primary/90 to-accent flex items-center justify-center relative overflow-hidden"
         >
-          {/* Shopping cart logo with animation */}
-          <div className="relative">
-            {/* Animated shopping cart icon */}
-            <motion.div
-              initial={{ 
-                scale: 0,
-                rotate: -180,
-                opacity: 0
-              }}
-              animate={{ 
-                scale: 1,
-                rotate: 0,
-                opacity: 1
-              }}
-              transition={{ 
-                duration: 0.8,
-                ease: "easeOut"
-              }}
-              className="relative"
-            >
+          {/* Animated background elements */}
+          <div className="absolute inset-0">
+            {[...Array(25)].map((_, i) => (
               <motion.div
-                className="w-20 h-20 md:w-28 md:h-28 bg-primary rounded-xl flex items-center justify-center shadow-lg"
-                animate={{
-                  boxShadow: ["0 8px 24px rgba(0,0,0,0.12)", "0 12px 28px rgba(0,0,0,0.18)", "0 8px 24px rgba(0,0,0,0.12)"]
-                }}
-                transition={{
-                  duration: 1.6,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <ShoppingCart className="h-10 w-10 md:h-14 md:w-14 text-primary-foreground" />
-              </motion.div>
-              
-              {/* Bounce effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg"
-                initial={{ scale: 1, opacity: 0 }}
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0, 0.4, 0]
-                }}
-                transition={{
-                  duration: 0.6,
-                  delay: 0.8,
-                  ease: "easeOut"
+                key={i}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 0.3, scale: 1 }}
+                transition={{ delay: i * 0.1, duration: 1 }}
+                className="absolute w-3 h-3 bg-white/20 rounded-full"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
                 }}
               />
-            </motion.div>
-
-            {/* Brand text */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-              className="mt-4 text-center"
-            >
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Ihsan</h1>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">Loading your experience…</p>
-            </motion.div>
-
-            {/* Loading bar */}
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: "100%", opacity: 1 }}
-              transition={{ duration: 1.2, delay: 0.2 }}
-              className="mt-6 h-1 w-40 bg-muted rounded overflow-hidden"
-            >
-              <motion.div className="h-full bg-primary" initial={{ x: -80 }} animate={{ x: 0 }} transition={{ duration: 1.2, ease: 'easeOut' }} />
-            </motion.div>
+            ))}
           </div>
 
-          {/* Clean background */}
+          <div className="text-center space-y-8 z-10">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20, duration: 1 }}
+              className="relative"
+            >
+              <div className="w-36 h-36 md:w-40 md:h-40 bg-white rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
+                <div className="w-28 h-28 md:w-32 md:h-32 bg-primary rounded-2xl flex items-center justify-center">
+                  <Building2 className="w-14 h-14 md:w-16 md:h-16 text-primary-foreground" />
+                </div>
+              </div>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="absolute -top-3 -right-3 w-12 h-12 bg-accent rounded-full flex items-center justify-center"
+              >
+                <Star className="w-6 h-6 text-accent-foreground" />
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="space-y-6"
+            >
+              <h1 className="text-4xl md:text-6xl font-bold text-white">PropertyHub</h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="text-lg md:text-2xl text-white/90 max-w-lg mx-auto"
+              >
+                Ghana's Most Advanced Real Estate Platform
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+                className="flex items-center justify-center gap-3 mt-4"
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                    className="w-3 h-3 bg-white rounded-full"
+                  />
+                ))}
+              </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   )
 }
+
+export default SplashScreen
