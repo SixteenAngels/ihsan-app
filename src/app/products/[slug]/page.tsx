@@ -270,10 +270,10 @@ export default function ProductPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(product.specifications).map(([key, value]) => (
+                {Object.entries((product.specifications || {}) as Record<string, string | number | boolean>).map(([key, value]) => (
                   <div key={key} className="flex justify-between">
                     <span className="text-muted-foreground">{key}</span>
-                    <span className="font-medium">{value}</span>
+                    <span className="font-medium">{String(value)}</span>
                   </div>
                 ))}
               </div>

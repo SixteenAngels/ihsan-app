@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,79 +78,58 @@ interface NotificationSettings {
   }
 }
 
-const mockProfile: UserProfile = {
-  id: '1',
-  fullName: 'Kwame Asante',
-  email: 'kwame.asante@email.com',
-  phone: '+233 24 123 4567',
-  avatar: '/api/placeholder/100/100',
+const emptyProfile: UserProfile = {
+  id: '',
+  fullName: '',
+  email: '',
+  phone: '',
+  avatar: '',
   role: 'customer',
-  memberSince: '2023-06-15',
-  totalOrders: 12,
-  totalSpent: 2450.75,
-  addresses: [
-    {
-      id: '1',
-      type: 'home',
-      name: 'Home Address',
-      address: '123 Independence Avenue',
-      city: 'Accra',
-      region: 'Greater Accra',
-      phone: '+233 24 123 4567',
-      isDefault: true
-    },
-    {
-      id: '2',
-      type: 'work',
-      name: 'Office Address',
-      address: '456 Oxford Street',
-      city: 'Accra',
-      region: 'Greater Accra',
-      phone: '+233 24 765 4321',
-      isDefault: false
-    }
-  ],
-  paymentMethods: [
-    {
-      id: '1',
-      type: 'card',
-      name: 'Visa Card',
-      lastFour: '4242',
-      isDefault: true
-    },
-    {
-      id: '2',
-      type: 'mobile_money',
-      name: 'MTN Mobile Money',
-      lastFour: '1234',
-      isDefault: false
-    }
-  ],
+  memberSince: new Date().toISOString(),
+  totalOrders: 0,
+  totalSpent: 0,
+  addresses: [],
+  paymentMethods: [],
   notifications: {
-    email: {
-      orders: true,
-      promotions: false,
-      security: true
-    },
-    sms: {
-      orders: true,
-      promotions: false
-    },
-    push: {
-      orders: true,
-      promotions: false,
-      groupBuys: true
-    }
+    email: { orders: true, promotions: false, security: true },
+    sms: { orders: true, promotions: false },
+    push: { orders: true, promotions: false, groupBuys: true }
   }
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile>(mockProfile)
+  const [profile, setProfile] = useState<UserProfile>(emptyProfile)
   const [isEditing, setIsEditing] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const [showAddAddress, setShowAddAddress] = useState(false)
   const [showAddPayment, setShowAddPayment] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: { user } } = await (supabase as any).auth.getUser()
+        if (!user) return
+        const { data } = await (supabase as any)
+          .from('profiles')
+          .select('id, full_name, email, phone, role, created_at')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (data) {
+          setProfile(prev => ({
+            ...prev,
+            id: data.id,
+            fullName: data.full_name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            role: (data.role as any) || 'customer',
+            memberSince: data.created_at || prev.memberSince,
+          }))
+        }
+      } catch {}
+    }
+    load()
+  }, [])
 
   const handleEdit = (field: string, currentValue: string) => {
     setEditingField(field)
