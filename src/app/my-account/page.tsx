@@ -42,15 +42,15 @@ export default function MyAccountPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumbs */}
         <div className="mb-6">
-          <Link href="/" className="text-slate-500 hover:text-slate-700">
+          <Link href="/" className="text-muted-foreground hover:text-foreground">
             Home
           </Link>
-          <span className="mx-2 text-slate-400">/</span>
-          <span className="text-slate-900">My Account</span>
+          <span className="mx-2 text-muted-foreground">/</span>
+          <span className="text-foreground">My Account</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -63,10 +63,10 @@ export default function MyAccountPage() {
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-accent transition-colors ${
                         activeTab === item.id 
                           ? 'bg-primary/10 text-primary border-r-2 border-primary' 
-                          : 'text-slate-700'
+                          : 'text-foreground'
                       }`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -83,12 +83,12 @@ export default function MyAccountPage() {
             {activeTab === 'profile' && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-2xl text-primary">Edit Your Profile</CardTitle>
+                  <CardTitle className="text-2xl text-foreground">Edit Your Profile</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Personal Information */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Personal Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="firstName">First Name</Label>
@@ -180,9 +180,9 @@ export default function MyAccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Your wishlist is empty</h3>
-                    <p className="text-gray-500 mb-6">Save items you love for later</p>
+                    <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">Your wishlist is empty</h3>
+                    <p className="text-muted-foreground mb-6">Save items you love for later</p>
                     <Button asChild>
                       <Link href="/categories">Start Shopping</Link>
                     </Button>
@@ -198,9 +198,9 @@ export default function MyAccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No saved addresses</h3>
-                    <p className="text-gray-500 mb-6">Add addresses for faster checkout</p>
+                    <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">No saved addresses</h3>
+                    <p className="text-muted-foreground mb-6">Add addresses for faster checkout</p>
                     <Button>Add New Address</Button>
                   </div>
                 </CardContent>
@@ -214,9 +214,9 @@ export default function MyAccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <CreditCard className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No payment methods</h3>
-                    <p className="text-gray-500 mb-6">Add payment methods for faster checkout</p>
+                    <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">No payment methods</h3>
+                    <p className="text-muted-foreground mb-6">Add payment methods for faster checkout</p>
                     <Button>Add Payment Method</Button>
                   </div>
                 </CardContent>
@@ -230,9 +230,9 @@ export default function MyAccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No returns yet</h3>
-                    <p className="text-gray-500 mb-6">Your return requests will appear here</p>
+                    <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">No returns yet</h3>
+                    <p className="text-muted-foreground mb-6">Your return requests will appear here</p>
                     <Button asChild>
                       <Link href="/categories">Start Shopping</Link>
                     </Button>
@@ -248,9 +248,9 @@ export default function MyAccountPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No cancellations</h3>
-                    <p className="text-gray-500 mb-6">Your cancelled orders will appear here</p>
+                    <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">No cancellations</h3>
+                    <p className="text-muted-foreground mb-6">Your cancelled orders will appear here</p>
                     <Button asChild>
                       <Link href="/categories">Start Shopping</Link>
                     </Button>
