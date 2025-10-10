@@ -5,7 +5,7 @@ import { ShoppingCart, User, Search, Menu, Heart, ChevronDown, Grid3X3, X, Truck
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CurrencySelector } from '@/components/currency/currency-selector'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart-context'
 import { useWishlist } from '@/lib/wishlist-context'
@@ -24,8 +24,6 @@ import {
 type CategoryNavItem = { id: string; name: string; href: string; children: { name: string; href: string }[] }
 
 export function Header() {
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const [roleDashboardHref, setRoleDashboardHref] = useState<string | null>(null)
   const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -35,19 +33,7 @@ export function Header() {
   const { totalItems: wishlistCount } = useWishlist()
   const { user, logout } = useAuth()
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsCategoriesOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
+  // (Radix handles dropdown open/close; no manual outside-click handling needed)
 
   // Detect role from cookies to show role-aware dashboard link
   useEffect(() => {
@@ -124,54 +110,50 @@ export function Header() {
                 Home
           </Link>
               
-              {/* Categories Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <Button
-                  variant="ghost"
-                  className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors flex items-center space-x-1 dark:text-slate-300 dark:hover:text-slate-50"
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                  id="categories-button"
-                  aria-haspopup="true"
-                  aria-expanded={isCategoriesOpen}
-                  aria-controls="categories-menu"
-                >
-                  <span>Categories</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </Button>
-                
-                {/* Categories Dropdown Menu */}
-                {isCategoriesOpen && (
-                  <div id="categories-menu" aria-labelledby="categories-button" className="absolute top-full left-0 mt-2 w-96 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50">
-                    <div className="p-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        {navCategories.map((category) => (
-                          <div key={category.id} className="space-y-2">
+              {/* Categories Dropdown (Radix) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors flex items-center space-x-1 dark:text-slate-300 dark:hover:text-slate-50"
+                    id="categories-button"
+                    aria-haspopup="true"
+                  >
+                    <span>Categories</span>
+                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[24rem]" align="start">
+                  <div className="p-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {navCategories.map((category) => (
+                        <div key={category.id} className="space-y-1">
+                          <DropdownMenuItem asChild>
                             <Link
                               href={category.href}
-                              className="flex items-center space-x-2 text-sm font-semibold text-slate-900 dark:text-slate-100 hover:text-primary dark:hover:text-primary transition-colors"
-                              onClick={() => setIsCategoriesOpen(false)}
+                              className="flex items-center space-x-2 text-sm font-semibold"
                             >
                               <span>{category.name}</span>
                             </Link>
-                            <div className="space-y-1 ml-6">
-                              {category.children.map((subcategory) => (
+                          </DropdownMenuItem>
+                          <div className="space-y-1 ml-6">
+                            {category.children.map((subcategory) => (
+                              <DropdownMenuItem key={subcategory.name} asChild>
                                 <Link
-                                  key={subcategory.name}
                                   href={subcategory.href}
-                                  className="block text-xs text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
-                                  onClick={() => setIsCategoriesOpen(false)}
+                                  className="block text-xs text-muted-foreground hover:text-primary"
                                 >
                                   {subcategory.name}
                                 </Link>
-                              ))}
-                            </div>
+                              </DropdownMenuItem>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               <Link href="/contact" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
                 Contact
