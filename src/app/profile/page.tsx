@@ -104,6 +104,7 @@ export default function ProfilePage() {
   const [editValue, setEditValue] = useState('')
   const [showAddAddress, setShowAddAddress] = useState(false)
   const [showAddPayment, setShowAddPayment] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
@@ -127,6 +128,9 @@ export default function ProfilePage() {
           }))
         }
       } catch {}
+      finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])
@@ -171,6 +175,17 @@ export default function ProfilePage() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Loading profile…</p>
+        </div>
+      </div>
+    )
   }
 
   return (
