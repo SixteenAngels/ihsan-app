@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { 
@@ -39,6 +40,7 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ name: '', brand: '', category: '', price: '', stock: '', image: '' })
+  const [categories, setCategories] = useState<{ id: string, name: string, slug: string }[]>([])
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,6 +56,17 @@ export default function ProductManagement() {
     }
 
     fetchProducts()
+    // Load categories for dropdown (flat list)
+    const loadCategories = async () => {
+      try {
+        const res = await fetch('/api/categories?includeChildren=false')
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setCategories(data as any)
+        }
+      } catch {}
+    }
+    loadCategories()
   }, [])
 
   const filteredProducts = products.filter(product =>
@@ -153,7 +166,16 @@ export default function ProductManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Select value={form.category} onValueChange={(value) => setForm({ ...form, category: value })}>
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug || cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
