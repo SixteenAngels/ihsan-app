@@ -23,9 +23,16 @@ export default function AdminVendorsPage() {
 
   const load = async () => {
     setLoading(true)
-    const res = await fetch(`/api/users?role=vendor${filter ? `&vendorStatus=${filter}` : ''}`)
-    const data = await res.json()
-    setVendors(data.users || [])
+    const res = await fetch(`/api/admin/users?role=vendor${filter ? `&vendorStatus=${filter}` : ''}`)
+    const result = await res.json()
+    const users = result.success ? result.data.users : (result.users || [])
+    setVendors(users.map((u: any) => ({
+      id: u.id,
+      name: u.full_name || u.email,
+      email: u.email,
+      status: u.is_active ? 'active' : 'inactive',
+      vendorStatus: (u.vendor_status || 'pending')
+    })))
     setLoading(false)
   }
 
@@ -34,19 +41,19 @@ export default function AdminVendorsPage() {
   }, [filter])
 
   const approve = async (id: string) => {
-    await fetch('/api/users', {
+    await fetch('/api/admin/users', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, vendorStatus: 'approved' })
+      body: JSON.stringify({ userId: id, vendorStatus: 'approved' })
     })
     load()
   }
 
   const suspend = async (id: string) => {
-    await fetch('/api/users', {
+    await fetch('/api/admin/users', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, vendorStatus: 'suspended' })
+      body: JSON.stringify({ userId: id, vendorStatus: 'suspended' })
     })
     load()
   }

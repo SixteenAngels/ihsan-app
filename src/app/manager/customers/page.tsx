@@ -7,40 +7,25 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { 
   Search,
-  Filter,
-  Eye,
-  Edit,
-  Trash2,
   Users,
   UserPlus,
   Mail,
   Phone,
-  MapPin,
-  ShoppingCart,
-  Star,
-  Calendar
+  Clock,
+  Shield,
+  MoreHorizontal
 } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 interface Customer {
   id: string
-  name: string
   email: string
-  phone: string
-  address: {
-    street: string
-    city: string
-    state: string
-    zipCode: string
-    country: string
-  }
-  totalOrders: number
-  totalSpent: number
-  averageOrderValue: number
-  lastOrderDate: string
-  registrationDate: string
-  status: 'active' | 'inactive' | 'suspended'
-  loyaltyPoints: number
-  preferredCategories: string[]
+  full_name?: string
+  phone?: string
+  role: string
+  vendor_status?: string
+  is_active?: boolean
+  created_at?: string
 }
 
 export default function ManagerCustomers() {
@@ -52,9 +37,10 @@ export default function ManagerCustomers() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await fetch('/api/users')
+        const response = await fetch('/api/users?limit=50')
         const data = await response.json()
-        setCustomers(data.users || [])
+        const users = (data.users || []) as any[]
+        setCustomers(users)
       } catch (error) {
         console.error('Error fetching customers:', error)
       } finally {
@@ -66,39 +52,38 @@ export default function ManagerCustomers() {
   }, [])
 
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.id.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = !statusFilter || customer.status === statusFilter
-    
+    const name = (customer.full_name || '').toLowerCase()
+    const email = (customer.email || '').toLowerCase()
+    const id = (customer.id || '').toLowerCase()
+    const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase()) || id.includes(searchTerm.toLowerCase())
+    const status = customer.is_active ? 'active' : 'inactive'
+    const matchesStatus = !statusFilter || status === statusFilter
     return matchesSearch && matchesStatus
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'inactive': return 'bg-gray-100 text-gray-800'
-      case 'suspended': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const getStatusColor = (isActive?: boolean) => {
+    return isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+  }
+
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return '—'
+    return new Date(dateString).toLocaleString()
+  }
+
+  const toggleActive = async (customer: Customer) => {
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: customer.id, isActive: !customer.is_active })
+      })
+      // Refresh list
+      const res = await fetch('/api/users?limit=50')
+      const data = await res.json()
+      setCustomers(data.users || [])
+    } catch (e) {
+      console.error('Failed to toggle active', e)
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Never'
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
   }
 
   if (loading) {
@@ -144,12 +129,7 @@ export default function ManagerCustomers() {
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
-          <option value="suspended">Suspended</option>
         </select>
-        <Button variant="outline">
-          <Filter className="h-4 w-4 mr-2" />
-          More Filters
-        </Button>
       </div>
 
       <Card>
@@ -160,10 +140,9 @@ export default function ManagerCustomers() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Customer</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Orders</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Total Spent</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Order</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Active</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -176,7 +155,7 @@ export default function ManagerCustomers() {
                           <Users className="h-5 w-5 text-slate-500" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-slate-900">{customer.name}</div>
+                          <div className="text-sm font-medium text-slate-900">{customer.full_name || customer.email}</div>
                           <div className="text-sm text-slate-500">ID: {customer.id}</div>
                         </div>
                       </div>
@@ -194,39 +173,35 @@ export default function ManagerCustomers() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                      <div className="flex items-center">
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        {customer.totalOrders}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                      <div>
-                        <div className="font-medium">{formatCurrency(customer.totalSpent)}</div>
-                        <div className="text-xs text-slate-500">
-                          Avg: {formatCurrency(customer.averageOrderValue)}
-                        </div>
-                      </div>
+                      <Badge className="bg-slate-100 text-slate-800 flex items-center">
+                        <Shield className="h-3 w-3 mr-1" />
+                        {customer.role}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge className={getStatusColor(customer.status)}>
-                        {customer.status}
+                      <Badge className={getStatusColor(customer.is_active)}>
+                        {customer.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                      {formatDate(customer.lastOrderDate)}
+                      <div className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDateTime(customer.created_at)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => toggleActive(customer)}>
+                            {customer.is_active ? 'Deactivate' : 'Activate'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -252,8 +227,8 @@ export default function ManagerCustomers() {
         </Card>
       )}
 
-      {/* Customer Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -274,7 +249,7 @@ export default function ManagerCustomers() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Active Customers</p>
                 <p className="text-2xl font-bold text-slate-900">
-                  {customers.filter(c => c.status === 'active').length}
+                  {customers.filter(c => c.is_active).length}
                 </p>
               </div>
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -288,38 +263,13 @@ export default function ManagerCustomers() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">New This Month</p>
+                <p className="text-sm font-medium text-slate-600">Inactive Customers</p>
                 <p className="text-2xl font-bold text-slate-900">
-                  {customers.filter(c => {
-                    const regDate = new Date(c.registrationDate)
-                    const now = new Date()
-                    const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
-                    return regDate >= monthAgo
-                  }).length}
+                  {customers.filter(c => !c.is_active).length}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <UserPlus className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Avg Order Value</p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {formatCurrency(
-                    customers.length > 0 
-                      ? customers.reduce((sum, c) => sum + c.averageOrderValue, 0) / customers.length
-                      : 0
-                  )}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Star className="h-6 w-6 text-orange-600" />
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </CardContent>

@@ -120,12 +120,18 @@ export default function UserManagement() {
 
   const handleUpdateUser = async (userId: string, updates: Partial<User>) => {
     try {
+      // Map UI fields to API expected fields
+      const payload: any = { userId }
+      if (typeof updates.is_active === 'boolean') payload.isActive = updates.is_active
+      if (typeof updates.role === 'string') payload.role = updates.role
+      if (typeof updates.vendor_status === 'string') payload.vendorStatus = updates.vendor_status
+
       const response = await fetch('/api/admin/users', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, ...updates })
+        body: JSON.stringify(payload)
       })
 
       const result = await response.json()
@@ -433,8 +439,20 @@ export default function UserManagement() {
                             <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { is_active: !user.is_active })}>
                               {user.is_active ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { role: 'admin' as any })}>
+                              Promote to Admin
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { role: 'manager' as any })}>
+                              Promote to Manager
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { role: 'vendor' as any })}>
+                              Make Vendor
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { role: 'customer' as any })}>
+                              Make Customer
+                            </DropdownMenuItem>
                             {user.role === 'vendor' && (
-                              <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { vendor_status: 'approved' })}>
+                              <DropdownMenuItem onClick={() => handleUpdateUser(user.id, { vendor_status: 'approved' as any })}>
                                 Approve Vendor
                               </DropdownMenuItem>
                             )}

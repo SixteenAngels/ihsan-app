@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Use 'as any' to avoid deep type instantiation issues on select typing
     let query: any = supabase
       .from('profiles')
-      .select('id,email,full_name,phone,avatar_url,role,created_at,updated_at,vendor_status', { count: 'exact' } as any)
+      .select('id,email,full_name,phone,avatar_url,role,is_active,created_at,updated_at,vendor_status', { count: 'exact' } as any)
 
     if (id) query = query.eq('id', id)
     if (email) query = query.eq('email', email)
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           vendor_status: body.vendorStatus || null,
         } as any,
       ])
-      .select('id,email,full_name,phone,avatar_url,role,created_at,updated_at,vendor_status')
+      .select('id,email,full_name,phone,avatar_url,role,is_active,created_at,updated_at,vendor_status')
       .single()
 
     if (error) throw error
@@ -86,6 +86,7 @@ export async function PUT(request: NextRequest) {
       avatar_url: updateData.avatarUrl,
       role: updateData.role,
       vendor_status: updateData.vendorStatus,
+      is_active: (updateData as any).isActive ?? (updateData as any).is_active,
       updated_at: new Date().toISOString(),
     }
     Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k])
