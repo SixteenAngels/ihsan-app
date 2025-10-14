@@ -134,6 +134,14 @@ export default function AdminDashboard() {
                 Settings
               </Button>
               <Button
+                variant={activeTab === 'chats' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setActiveTab('chats')}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Support Chats
+              </Button>
+              <Button
                 variant={activeTab === 'homepage' ? 'default' : 'ghost'}
                 className="w-full justify-start"
                 onClick={() => setActiveTab('homepage')}
@@ -349,6 +357,31 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {activeTab === 'chats' && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-slate-900">Support Chats</h2>
+              <div className="bg-white rounded-lg shadow">
+                {/* Embed LiveChat for admin */}
+                {/* @ts-expect-error Server/Client mismatch acceptable for dynamic import */}
+                {require('@/components/chat/live-chat').default && (
+                  // eslint-disable-next-line @typescript-eslint/no-var-requires
+                  require('@/lib/auth-context').useAuth && (
+                    (() => {
+                      const { useAuth } = require('@/lib/auth-context')
+                      const LiveChat = require('@/components/chat/live-chat').default
+                      const AuthWrapped = () => {
+                        const { user } = useAuth()
+                        if (!user) return null
+                        return <LiveChat userId={user.id} userRole={user.role} />
+                      }
+                      return <AuthWrapped />
+                    })()
+                  )
+                )}
+              </div>
             </div>
           )}
 
