@@ -84,9 +84,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <body
-        className="font-sans antialiased"
+        className="min-h-full bg-background text-foreground font-sans antialiased"
         suppressHydrationWarning={true}
       >
         <ClientSplashScreen />

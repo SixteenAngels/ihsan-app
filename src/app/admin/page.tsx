@@ -51,13 +51,13 @@ export default function AdminDashboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="bg-background border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Dashboard</h1>
-              <p className="text-slate-600 dark:text-slate-300">Manage your e-commerce store</p>
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Manage your e-commerce store</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="flex">
-        <aside className="w-64 bg-white border-r border-slate-200 min-h-screen">
+        <aside className="w-64 bg-card text-card-foreground border-r border-border min-h-screen">
           <nav className="p-4">
             <div className="space-y-2">
               <Button
@@ -344,13 +344,13 @@ export default function AdminDashboard() {
 
           {activeTab === 'store' && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-slate-900">Admin Store</h2>
+              <h2 className="text-2xl font-bold">Admin Store</h2>
               <Card>
                 <CardContent className="p-6">
                   <div className="text-center">
-                    <Package className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-2">Manage Admin Store</h3>
-                    <p className="text-slate-600 mb-4">List and manage products sold directly by Admin.</p>
+                    <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Manage Admin Store</h3>
+                    <p className="text-muted-foreground mb-4">List and manage products sold directly by Admin.</p>
                     <Button asChild>
                       <a href="/admin/store">Go to Admin Store</a>
                     </Button>
@@ -362,8 +362,8 @@ export default function AdminDashboard() {
 
           {activeTab === 'chats' && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-slate-900">Support Chats</h2>
-              <div className="bg-white rounded-lg shadow">
+              <h2 className="text-2xl font-bold">Support Chats</h2>
+              <div className="bg-card text-card-foreground rounded-lg shadow">
                 {/* Embed LiveChat for admin */}
                 {/* @ts-expect-error Server/Client mismatch acceptable for dynamic import */}
                 {require('@/components/chat/live-chat').default && (

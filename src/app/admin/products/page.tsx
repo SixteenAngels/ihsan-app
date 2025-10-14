@@ -96,9 +96,9 @@ export default function ProductManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-foreground">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Products</h2>
+        <h2 className="text-2xl font-bold">Products</h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -199,7 +199,7 @@ export default function ProductManagement() {
       <div className="flex items-center space-x-4">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search products..."
               className="pl-10 pr-4"
@@ -218,7 +218,7 @@ export default function ProductManagement() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>

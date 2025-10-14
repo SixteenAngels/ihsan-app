@@ -77,7 +77,7 @@ export function Header() {
   return (
     <>
       {/* Promotional Banner */}
-      <div className="bg-black text-white py-2 text-center text-sm" role="region" aria-label="Promotional banner">
+      <div className="bg-primary text-primary-foreground py-2 text-center text-sm" role="region" aria-label="Promotional banner">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <span>Summer Sale: Swimwear + Free Express Delivery — 50% off</span>
           <div className="flex items-center space-x-4">
@@ -96,17 +96,17 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white dark:bg-slate-900 shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-background text-foreground">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2" aria-label="Ihsan home">
-            <span className="font-bold text-2xl text-slate-900 dark:text-slate-100">Ihsan</span>
+            <span className="font-bold text-2xl">Ihsan</span>
           </Link>
 
             {/* Navigation Links - Desktop */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Home
           </Link>
               
@@ -115,7 +115,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors flex items-center space-x-1 dark:text-slate-300 dark:hover:text-slate-50"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center space-x-1"
                     id="categories-button"
                     aria-haspopup="true"
                   >
@@ -155,14 +155,14 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <Link href="/contact" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+              <Link href="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Contact
               </Link>
-              <Link href="/about" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+              <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 About
               </Link>
               {!user && (
-                <Link href="/signup" className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+                <Link href="/signup" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   Sign up
                 </Link>
               )}
@@ -181,9 +181,9 @@ export function Header() {
           </div>
 
           {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 text-foreground">
             {/* Wishlist */}
-              <Link href="/wishlist" className="text-slate-600 hover:text-slate-900 transition-colors relative dark:text-slate-300 dark:hover:text-slate-50" aria-label="Wishlist">
+              <Link href="/wishlist" className="text-muted-foreground hover:text-foreground transition-colors relative" aria-label="Wishlist">
                 <Heart className="h-5 w-5" aria-hidden="true" />
                 <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-white text-xs flex items-center justify-center">
                   {wishlistCount}
@@ -194,12 +194,12 @@ export function Header() {
               <NotificationDropdown />
 
             {/* Tracking */}
-              <Link href="/tracking" className="text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-slate-50" aria-label="Track Order">
+              <Link href="/tracking" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Track Order">
                 <Truck className="h-5 w-5" aria-hidden="true" />
               </Link>
 
             {/* Cart */}
-              <Link href="/cart" className="text-slate-600 hover:text-slate-900 transition-colors relative dark:text-slate-300 dark:hover:text-slate-50" aria-label="Cart">
+              <Link href="/cart" className="text-muted-foreground hover:text-foreground transition-colors relative" aria-label="Cart">
                 <ShoppingCart className="h-5 w-5" aria-hidden="true" />
                 <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-white text-xs flex items-center justify-center">
                   {cartCount}
@@ -237,8 +237,8 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-slate-900">Login</Link>
-                <Link href="/signup" className="text-sm font-medium text-slate-700 hover:text-slate-900">Sign up</Link>
+                <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">Login</Link>
+                <Link href="/signup" className="text-sm font-medium text-muted-foreground hover:text-foreground">Sign up</Link>
               </div>
             )}
 
