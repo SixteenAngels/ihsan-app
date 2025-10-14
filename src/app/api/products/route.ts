@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     const slug = (body.slug || String(body.name || '')).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `product-${Date.now()}`
     const sku = body.sku || `${slug}-${Date.now()}`
     const images = body.image ? [body.image] : (Array.isArray(body.images) ? body.images : [])
+    const tags = Array.isArray(body.tags) ? body.tags : []
 
     // Determine approved/hidden defaults (optional columns)
     const settings = getSettings()
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
           category_id: categoryId as any,
           brand: body.brand || null,
           images,
+          tags: tags as any,
           is_active: hidden ? false : true,
           stock_quantity: typeof body.stock === 'number' ? body.stock : 0,
           sku,
@@ -154,6 +156,9 @@ export async function PUT(request: NextRequest) {
     const { id, ...updateData } = body
 
     let patch: any = { ...updateData }
+    if (Array.isArray(updateData.tags)) {
+      patch.tags = updateData.tags
+    }
 
     if (updateData.category) {
       const slugOrName = String(updateData.category)

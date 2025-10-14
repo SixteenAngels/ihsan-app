@@ -185,10 +185,10 @@ export default function ProductManagement() {
                     : []
                   setForm({ ...form, category: value, sizeScale: scale as any, sizesCsv: defaultSizes.join(',') })
                 }}>
-                  <SelectTrigger id="category">
+                  <SelectTrigger id="category" className="bg-card text-card-foreground">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card text-card-foreground">
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.slug || cat.name}>{cat.name}</SelectItem>
                     ))}
@@ -202,16 +202,20 @@ export default function ProductManagement() {
                     let defaults: string[] = []
                     if (value === 'clothing') defaults = ['XS','S','M','L','XL','XXL']
                     if (value === 'shoes_eu') defaults = ['36','37','38','39','40','41','42','43','44','45','46']
+                    if (value === 'shoes_us') defaults = ['6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','12','13']
+                    if (value === 'shoes_uk') defaults = ['5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','11','12']
                     if (value === 'kids') defaults = ['2','4','6','8','10','12','14']
                     setForm({ ...form, sizeScale: value as any, sizesCsv: defaults.join(',') })
                   }}>
-                    <SelectTrigger id="size-scale">
+                    <SelectTrigger id="size-scale" className="bg-card text-card-foreground">
                       <SelectValue placeholder="Select size scale" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-card text-card-foreground">
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="clothing">Clothing (XS-XXL)</SelectItem>
                       <SelectItem value="shoes_eu">Shoes (EU 36-46)</SelectItem>
+                      <SelectItem value="shoes_us">Shoes (US)</SelectItem>
+                      <SelectItem value="shoes_uk">Shoes (UK)</SelectItem>
                       <SelectItem value="kids">Kids (2-14)</SelectItem>
                     </SelectContent>
                   </Select>
