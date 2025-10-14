@@ -23,7 +23,7 @@ export default function VendorProductsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', brand: '', category: '', price: '', stock: '', image: '' })
+  const [form, setForm] = useState({ name: '', brand: '', category: '', price: '', stock: '', image: '', sizeScale: 'none', sizesCsv: '' })
 
   useEffect(() => {
     const fetchProducts = async () => {

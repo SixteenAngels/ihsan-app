@@ -39,7 +39,7 @@ export default function ProductManagement() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', brand: '', category: '', price: '', stock: '', image: '' })
+  const [form, setForm] = useState({ name: '', brand: '', category: '', price: '', stock: '', image: '', sizeScale: 'none', sizesCsv: '' })
   const [categories, setCategories] = useState<{ id: string, name: string, slug: string }[]>([])
 
   useEffect(() => {
@@ -113,6 +113,12 @@ export default function ProductManagement() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault()
+                const sizeTags = (form.sizesCsv || '')
+                  .split(',')
+                  .map(s => s.trim())
+                  .filter(Boolean)
+                  .map(s => `size:${s}`)
+                const scaleTag = form.sizeScale && form.sizeScale !== 'none' ? [`size-scale:${form.sizeScale}`] : []
                 const payload = {
                   name: form.name,
                   brand: form.brand || undefined,
@@ -120,11 +126,12 @@ export default function ProductManagement() {
                   price: Number(form.price) || 0,
                   stock: Number(form.stock) || 0,
                   image: form.image || undefined,
+                  ...(sizeTags.length || scaleTag.length ? { tags: [...scaleTag, ...sizeTags] } : {}),
                 }
                 const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
                 if (res.ok) {
                   setOpen(false)
-                  setForm({ name: '', brand: '', category: '', price: '', stock: '', image: '' })
+                  setForm({ name: '', brand: '', category: '', price: '', stock: '', image: '', sizeScale: 'none', sizesCsv: '' })
                   const data = await (await fetch('/api/products')).json()
                   setProducts(data.products || [])
                 }
@@ -166,7 +173,18 @@ export default function ProductManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select value={form.category} onValueChange={(value) => setForm({ ...form, category: value })}>
+                <Select value={form.category} onValueChange={(value) => {
+                  const v = value.toLowerCase()
+                  let scale = 'none'
+                  if (/shoe|sneaker|footwear|boot/.test(v)) scale = 'shoes_eu'
+                  else if (/kid|baby|child/.test(v)) scale = 'kids'
+                  else if (/cloth|fashion|apparel|shirt|dress|trouser|pant|skirt|top|wear/.test(v)) scale = 'clothing'
+                  const defaultSizes = scale === 'clothing' ? ['XS','S','M','L','XL','XXL']
+                    : scale === 'shoes_eu' ? ['36','37','38','39','40','41','42','43','44','45','46']
+                    : scale === 'kids' ? ['2','4','6','8','10','12','14']
+                    : []
+                  setForm({ ...form, category: value, sizeScale: scale as any, sizesCsv: defaultSizes.join(',') })
+                }}>
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -176,6 +194,32 @@ export default function ProductManagement() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="size-scale">Size scale</Label>
+                  <Select value={form.sizeScale} onValueChange={(value) => {
+                    let defaults: string[] = []
+                    if (value === 'clothing') defaults = ['XS','S','M','L','XL','XXL']
+                    if (value === 'shoes_eu') defaults = ['36','37','38','39','40','41','42','43','44','45','46']
+                    if (value === 'kids') defaults = ['2','4','6','8','10','12','14']
+                    setForm({ ...form, sizeScale: value as any, sizesCsv: defaults.join(',') })
+                  }}>
+                    <SelectTrigger id="size-scale">
+                      <SelectValue placeholder="Select size scale" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="clothing">Clothing (XS-XXL)</SelectItem>
+                      <SelectItem value="shoes_eu">Shoes (EU 36-46)</SelectItem>
+                      <SelectItem value="kids">Kids (2-14)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sizes">Available sizes (comma-separated)</Label>
+                  <Input id="sizes" placeholder="e.g., S,M,L,XL or 38,39,40" value={form.sizesCsv} onChange={(e) => setForm({ ...form, sizesCsv: e.target.value })} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
