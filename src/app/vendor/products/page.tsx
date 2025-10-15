@@ -66,6 +66,12 @@ export default function VendorProductsPage() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault()
+                const sizeTags = (form.sizesCsv || '')
+                  .split(',')
+                  .map(s => s.trim())
+                  .filter(Boolean)
+                  .map(s => `size:${s}`)
+                const scaleTag = form.sizeScale && form.sizeScale !== 'none' ? [`size-scale:${form.sizeScale}`] : []
                 const payload = {
                   name: form.name,
                   brand: form.brand || undefined,
@@ -74,11 +80,12 @@ export default function VendorProductsPage() {
                   stock: Number(form.stock) || 0,
                   vendorId: 'vendor-1',
                   image: form.image || undefined,
+                  ...(sizeTags.length || scaleTag.length ? { tags: [...scaleTag, ...sizeTags] } : {}),
                 }
                 const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
                 if (res.ok) {
                   setOpen(false)
-                  setForm({ name: '', brand: '', category: '', price: '', stock: '', image: '' })
+                  setForm({ name: '', brand: '', category: '', price: '', stock: '', image: '', sizeScale: 'none', sizesCsv: '' })
                   const data = await (await fetch('/api/products?vendorId=vendor-1')).json()
                   setProducts(data.products || [])
                 }
@@ -120,7 +127,50 @@ export default function VendorProductsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Input id="category" value={form.category} onChange={(e) => {
+                  const value = e.target.value
+                  const v = value.toLowerCase()
+                  let scale = 'none'
+                  if (/shoe|sneaker|footwear|boot/.test(v)) scale = 'shoes_eu'
+                  else if (/kid|baby|child/.test(v)) scale = 'kids'
+                  else if (/cloth|fashion|apparel|shirt|dress|trouser|pant|skirt|top|wear/.test(v)) scale = 'clothing'
+                  const defaultSizes = scale === 'clothing' ? ['XS','S','M','L','XL','XXL']
+                    : scale === 'shoes_eu' ? ['36','37','38','39','40','41','42','43','44','45','46']
+                    : scale === 'kids' ? ['2','4','6','8','10','12','14']
+                    : []
+                  setForm({ ...form, category: value, sizeScale: scale as any, sizesCsv: defaultSizes.join(',') })
+                }} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="size-scale">Size scale</Label>
+                  <select
+                    id="size-scale"
+                    className="px-3 py-2 border border-slate-300 rounded-md"
+                    value={form.sizeScale}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      let defaults: string[] = []
+                      if (value === 'clothing') defaults = ['XS','S','M','L','XL','XXL']
+                      if (value === 'shoes_eu') defaults = ['36','37','38','39','40','41','42','43','44','45','46']
+                      if (value === 'shoes_us') defaults = ['6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','12','13']
+                      if (value === 'shoes_uk') defaults = ['5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','11','12']
+                      if (value === 'kids') defaults = ['2','4','6','8','10','12','14']
+                      setForm({ ...form, sizeScale: value as any, sizesCsv: defaults.join(',') })
+                    }}
+                  >
+                    <option value="none">None</option>
+                    <option value="clothing">Clothing (XS-XXL)</option>
+                    <option value="shoes_eu">Shoes (EU 36-46)</option>
+                    <option value="shoes_us">Shoes (US)</option>
+                    <option value="shoes_uk">Shoes (UK)</option>
+                    <option value="kids">Kids (2-14)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sizes">Available sizes (comma-separated)</Label>
+                  <Input id="sizes" placeholder="e.g., S,M,L,XL or 38,39,40" value={form.sizesCsv} onChange={(e) => setForm({ ...form, sizesCsv: e.target.value })} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
