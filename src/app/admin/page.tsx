@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import LiveChat from '@/components/chat/live-chat'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +12,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const router = useRouter()
   const [counts, setCounts] = useState({ revenue: 0, orders: 0, products: 0, users: 0, pendingApprovals: 0 })
+  const { user } = useAuth()
 
   const handleLogout = () => {
     // Clear auth cookies
@@ -364,23 +367,7 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Support Chats</h2>
               <div className="bg-card text-card-foreground rounded-lg shadow">
-                {/* Embed LiveChat for admin */}
-                {/* @ts-expect-error Server/Client mismatch acceptable for dynamic import */}
-                {require('@/components/chat/live-chat').default && (
-                  // eslint-disable-next-line @typescript-eslint/no-var-requires
-                  require('@/lib/auth-context').useAuth && (
-                    (() => {
-                      const { useAuth } = require('@/lib/auth-context')
-                      const LiveChat = require('@/components/chat/live-chat').default
-                      const AuthWrapped = () => {
-                        const { user } = useAuth()
-                        if (!user) return null
-                        return <LiveChat userId={user.id} userRole={user.role} />
-                      }
-                      return <AuthWrapped />
-                    })()
-                  )
-                )}
+                {user && <LiveChat userId={user.id} userRole={user.role} />}
               </div>
             </div>
           )}
